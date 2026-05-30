@@ -27,6 +27,52 @@ const PUBLIC_TAGS = new Set([
   "Transcripts",
 ]);
 
+// Hand-curated developer-facing surface. Anything outside this set is hidden
+// from docs.waterr.ai even if the annotation still lives in CoreBackend.
+// Keyed by "METHOD /path" exactly as it appears in the swagger spec.
+const PUBLIC_OPS = new Set([
+  // Scenarios — anchor workflow
+  "POST /scenarios",
+  "GET /scenarios",
+  "GET /scenarios/{id}/export",
+  "PUT /scenarios/{id}",
+  "DELETE /scenarios/{id}",
+  // Meetings — anchor workflow
+  "POST /meetings",
+  "GET /meetings",
+  "GET /meetings/{id}",
+  "PUT /meetings/{meetingId}",
+  "PUT /meetings/{meetingId}/end",
+  "DELETE /meetings/{meetingId}",
+  "GET /scenarios/membership/{membershipId}/meetings",
+  // Analyses — anchor workflow
+  "GET /analyses/meeting/{meetingId}",
+  "GET /analyses/{id}",
+  "POST /analyses/trigger/{meetingId}",
+  // Transcripts
+  "GET /transcripts/meeting/{meetingId}",
+  "GET /transcripts/{id}",
+  // Recordings
+  "GET /recordings/meeting/{meetingId}",
+  "GET /recordings/url-with-thumbnail/{meetingId}",
+  // Personas
+  "GET /personas",
+  "POST /personas",
+  "GET /personas/{id}",
+  "PUT /personas/{id}",
+  "DELETE /personas/{id}",
+  // Goals
+  "GET /goals",
+  "POST /goals",
+  "PUT /goals/{id}",
+  "DELETE /goals/{id}",
+  // Voices
+  "GET /voices",
+  // Users
+  "GET /users/{userId}",
+  "PUT /users/{userId}",
+]);
+
 const PROD_URL = "https://api.waterr.ai/v1";
 
 function loadSpec() {
@@ -48,6 +94,7 @@ function filterPaths(paths) {
       const op = paths[route][method];
       const tag = (op.tags || [])[0];
       if (!PUBLIC_TAGS.has(tag)) continue;
+      if (!PUBLIC_OPS.has(`${method.toUpperCase()} ${route}`)) continue;
       ops[method] = rewriteOperation(op);
     }
     if (Object.keys(ops).length > 0) out[route] = ops;

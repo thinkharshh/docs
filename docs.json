@@ -87,15 +87,15 @@
           {
             "group": "Core APIs",
             "pages": [
-              "api-reference/users",
-              "api-reference/personas",
-              "api-reference/voices",
               "api-reference/scenarios",
-              "api-reference/goals",
               "api-reference/meetings",
               "api-reference/analysis",
+              "api-reference/transcripts",
               "api-reference/recordings",
-              "api-reference/transcripts"
+              "api-reference/personas",
+              "api-reference/goals",
+              "api-reference/voices",
+              "api-reference/users"
             ]
           },
           {
@@ -115,13 +115,8 @@
           {
             "group": "Analyses",
             "pages": [
-              "api-reference/endpoint/get-analyses",
-              "api-reference/endpoint/post-analyses",
-              "api-reference/endpoint/delete-analyses-id",
               "api-reference/endpoint/get-analyses-id",
-              "api-reference/endpoint/put-analyses-id",
               "api-reference/endpoint/get-analyses-meeting-meetingid",
-              "api-reference/endpoint/get-analyses-scenario-scenarioid",
               "api-reference/endpoint/post-analyses-trigger-meetingid"
             ]
           },
@@ -131,11 +126,7 @@
               "api-reference/endpoint/get-goals",
               "api-reference/endpoint/post-goals",
               "api-reference/endpoint/delete-goals-id",
-              "api-reference/endpoint/get-goals-id",
-              "api-reference/endpoint/put-goals-id",
-              "api-reference/endpoint/post-goals-bulk",
-              "api-reference/endpoint/get-goals-membership-membershipid",
-              "api-reference/endpoint/get-goals-membership-membershipid-all"
+              "api-reference/endpoint/put-goals-id"
             ]
           },
           {
@@ -146,15 +137,7 @@
               "api-reference/endpoint/get-meetings-id",
               "api-reference/endpoint/delete-meetings-meetingid",
               "api-reference/endpoint/put-meetings-meetingid",
-              "api-reference/endpoint/put-meetings-meetingid-end",
-              "api-reference/endpoint/post-meetings-meetingid-notify-end",
-              "api-reference/endpoint/get-meetings-meetingid-participants",
-              "api-reference/endpoint/post-meetings-meetingid-participants",
-              "api-reference/endpoint/delete-meetings-meetingid-participants-participantid",
-              "api-reference/endpoint/patch-meetings-meetingid-soft-delete",
-              "api-reference/endpoint/get-meetings-daily-dailymeetingid",
-              "api-reference/endpoint/get-meetings-durations",
-              "api-reference/endpoint/get-meetings-membership-membershipid"
+              "api-reference/endpoint/put-meetings-meetingid-end"
             ]
           },
           {
@@ -164,25 +147,14 @@
               "api-reference/endpoint/post-personas",
               "api-reference/endpoint/delete-personas-id",
               "api-reference/endpoint/get-personas-id",
-              "api-reference/endpoint/put-personas-id",
-              "api-reference/endpoint/post-personas-bulk",
-              "api-reference/endpoint/get-personas-membership-membershipid",
-              "api-reference/endpoint/get-personas-organization-orgid"
+              "api-reference/endpoint/put-personas-id"
             ]
           },
           {
             "group": "Recordings",
             "pages": [
-              "api-reference/endpoint/get-recordings",
-              "api-reference/endpoint/post-recordings",
-              "api-reference/endpoint/delete-recordings-id",
-              "api-reference/endpoint/get-recordings-id",
-              "api-reference/endpoint/put-recordings-id",
               "api-reference/endpoint/get-recordings-meeting-meetingid",
-              "api-reference/endpoint/get-recordings-membership-membershipid",
-              "api-reference/endpoint/get-recordings-scenario-scenarioid",
-              "api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid",
-              "api-reference/endpoint/get-recordings-url-meetingid"
+              "api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid"
             ]
           },
           {
@@ -193,57 +165,27 @@
               "api-reference/endpoint/delete-scenarios-id",
               "api-reference/endpoint/put-scenarios-id",
               "api-reference/endpoint/get-scenarios-id-export",
-              "api-reference/endpoint/get-scenarios-id-files",
-              "api-reference/endpoint/delete-scenarios-id-files-fileid",
-              "api-reference/endpoint/get-scenarios-id-files-fileid-chunks",
-              "api-reference/endpoint/post-scenarios-id-files-fileid-convert-and-process",
-              "api-reference/endpoint/delete-scenarios-id-files-fileid-permanent",
-              "api-reference/endpoint/post-scenarios-id-files-fileid-reanalyze",
-              "api-reference/endpoint/get-scenarios-id-files-fileid-status",
-              "api-reference/endpoint/post-scenarios-id-files-reanalyze-all",
-              "api-reference/endpoint/post-scenarios-id-files-upload",
-              "api-reference/endpoint/post-scenarios-id-share",
-              "api-reference/endpoint/delete-scenarios-scenarioid-session-options",
-              "api-reference/endpoint/get-scenarios-scenarioid-session-options",
-              "api-reference/endpoint/put-scenarios-scenarioid-session-options",
-              "api-reference/endpoint/post-scenarios-bulk",
-              "api-reference/endpoint/post-scenarios-create-with-gpt",
-              "api-reference/endpoint/post-scenarios-import",
-              "api-reference/endpoint/get-scenarios-membership-membershipid",
-              "api-reference/endpoint/get-scenarios-membership-membershipid-meetings",
-              "api-reference/endpoint/post-scenarios-transcript-meetingid"
+              "api-reference/endpoint/get-scenarios-membership-membershipid-meetings"
             ]
           },
           {
             "group": "Transcripts",
             "pages": [
-              "api-reference/endpoint/get-transcripts",
-              "api-reference/endpoint/post-transcripts",
-              "api-reference/endpoint/delete-transcripts-id",
               "api-reference/endpoint/get-transcripts-id",
-              "api-reference/endpoint/put-transcripts-id",
-              "api-reference/endpoint/post-transcripts-transcriptid-chunks",
               "api-reference/endpoint/get-transcripts-meeting-meetingid"
             ]
           },
           {
             "group": "Users",
             "pages": [
-              "api-reference/endpoint/get-users",
-              "api-reference/endpoint/delete-users-userid",
               "api-reference/endpoint/get-users-userid",
-              "api-reference/endpoint/put-users-userid",
-              "api-reference/endpoint/get-users-username-username"
+              "api-reference/endpoint/put-users-userid"
             ]
           },
           {
             "group": "Voices",
             "pages": [
-              "api-reference/endpoint/post-voices",
-              "api-reference/endpoint/delete-voices-id",
-              "api-reference/endpoint/get-voices-id",
-              "api-reference/endpoint/put-voices-id",
-              "api-reference/endpoint/get-voices-membership-membershipid"
+              "api-reference/endpoint/get-voices"
             ]
           }
         ]
