@@ -1,0 +1,114 @@
+---
+title: 'Session Lifecycle'
+description: 'Understand how a meeting session flows from creation to analysis.'
+---
+
+## Overview
+
+Every WaterrAI session follows a predictable lifecycle. Understanding this flow helps you build reliable integrations.
+
+```
+Create Meeting → Participant Joins → Session Active → Session Ends → Analysis Generated
+```
+
+## Lifecycle Stages
+
+<Steps>
+  <Step title="Create a Meeting">
+    **API call:** `POST /meetings`
+
+    You create a meeting by passing a `scenario_id` and `person_name`. The API returns:
+    - `daily_meeting_url` -- the video room URL
+    - `room_token` -- authentication token for the room
+    - `id` -- the meeting ID (use this to fetch results later)
+
+    **Status:** `created`
+  </Step>
+
+  <Step title="Participant Joins">
+    The participant opens the `daily_meeting_url` (or you embed it in your app). They:
+    1. See the welcome screen with persona info
+    2. Grant microphone/camera permissions
+    3. Accept consent (if enabled)
+    4. Enter the live session
+
+    **Status:** `active`
+  </Step>
+
+  <Step title="Session Active">
+    During the session:
+    - The AI persona conducts the conversation based on the meeting script
+    - Audio is transcribed in real-time
+    - Video is recorded (if enabled)
+    - Vision capabilities process camera/screen input (if enabled)
+
+    The session runs until:
+    - The participant leaves
+    - The duration limit is reached
+    - You call `PUT /meetings/{id}/end`
+  </Step>
+
+  <Step title="Session Ends">
+    When the session ends:
+    - Recording is finalized and uploaded
+    - Transcript is processed into sentences
+    - Goal evaluation begins
+
+    **Status:** `ended`
+  </Step>
+
+  <Step title="Analysis Generated">
+    Within 30-60 seconds after the session ends:
+    - AI evaluates the transcript against each goal
+    - Scores, feedback, and speech analytics are generated
+    - Results are stored and available via API
+
+    **Status:** Analysis available at `GET /analyses/meeting/{id}`
+
+    Email notifications are sent to configured recipients.
+  </Step>
+</Steps>
+
+## Polling for Results
+
+After a meeting ends, analysis takes 30-60 seconds to generate. Poll for it:
+
+```javascript
+async function waitForAnalysis(meetingId, maxAttempts = 10) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(
+      `https://waterr.ai/backend/analyses/meeting/${meetingId}`,
+      { headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
+    );
+
+    if (res.ok) return res.json();
+    if (res.status !== 404) throw new Error(`Unexpected: ${res.status}`);
+
+    await new Promise(r => setTimeout(r, 5000)); // Wait 5s between attempts
+  }
+  throw new Error('Analysis not ready after max attempts');
+}
+```
+
+<Tip>
+  For production, set up [email notifications](/capabilities/notifications) to get results automatically. [Webhooks](/api-reference/webhooks) are coming soon as an additional option.
+</Tip>
+
+## Fetching Results
+
+Once analysis is ready, fetch all session data:
+
+| Data | Endpoint | Available |
+|------|----------|-----------|
+| Analysis & scores | `GET /analyses/meeting/{meetingId}` | ~60s after session ends |
+| Transcript | `GET /sentenced-transcripts/scenario/{scenarioId}` | ~30s after session ends |
+| Recording | `GET /recordings/meeting/{meetingId}` | ~2-5 min after session ends |
+
+## Ending a Meeting Programmatically
+
+To end a meeting from your server (e.g., time limit reached):
+
+```bash
+curl -X PUT https://waterr.ai/backend/meetings/{meetingId}/end \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```

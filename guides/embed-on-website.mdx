@@ -1,0 +1,68 @@
+---
+title: "How to Embed on Your Website"
+description: "Step-by-step guide to embedding a scenario on any webpage."
+---
+
+# How to Embed a Scenario on Your Website
+
+Add an AI conversation directly to your website -- no redirect needed.
+
+<Steps>
+  <Step title="Open the Share modal">
+    Open your scenario and click **Share** in the header.
+  </Step>
+  <Step title="Go to the Embed tab">
+    Click the **"Embed"** tab in the modal.
+  </Step>
+  <Step title="Choose your embed format">
+    Select one:
+    - **Avatar Assist** (176x265px): A floating avatar widget in the corner of your page. Visitors click to start chatting.
+    - **Inline** (800x600px default): Full meeting UI embedded in your page content.
+  </Step>
+  <Step title="Configure dimensions (Inline only)">
+    For Inline embeds, adjust:
+    - **Width**: Drag or type a value (300-2000px)
+    - **Height**: Drag or type a value (400-1200px)
+    - Check **Fullscreen** to let participants expand
+    - Check **Responsive** to scale with container width
+  </Step>
+  <Step title="Copy the embed code">
+    Click **"Copy Embed Code"**. You'll get an iframe snippet like:
+    ```html
+    <iframe 
+      src="https://meet.waterr.ai/embed/inline/abc123" 
+      width="800px" 
+      height="600px" 
+      frameborder="0"
+      allow="camera; microphone; autoplay; display-capture; fullscreen"
+      style="max-width: 100%;">
+    </iframe>
+    ```
+  </Step>
+  <Step title="Paste into your website">
+    Add the iframe code to your HTML where you want the scenario to appear.
+  </Step>
+</Steps>
+
+## Requirements
+
+<Warning>
+Your website must use **HTTPS**. Browsers block microphone and camera access on non-secure origins.
+</Warning>
+
+## Testing Your Embed
+
+After adding the code:
+1. Load your webpage
+2. The embed should show the meeting UI (or floating avatar)
+3. Click to start -- grant microphone permissions when prompted
+4. Verify the AI persona responds correctly
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Embed shows blank | Ensure scenario visibility is set to public |
+| "Permission denied" for microphone | Switch your site to HTTPS |
+| Embed too small on mobile | Enable the "Responsive" option |
+| Audio not playing | Add `autoplay` to the iframe's `allow` attribute |

@@ -1,0 +1,97 @@
+---
+title: Notifications
+description: "Get notified when sessions complete and receive results automatically."
+---
+
+# Notifications
+
+Stay informed about session activity with email notifications and webhook alerts.
+
+## Email Notifications
+
+Get notified by email whenever a participant completes a session.
+
+### Setting up email notifications
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to configure.
+  </Step>
+  <Step title="Go to Settings">
+    Click the **Settings** tab on the scenario detail page.
+  </Step>
+  <Step title="Find the Notifications section">
+    Scroll to the **Notifications** section.
+  </Step>
+  <Step title="Add email addresses">
+    Type an email address and press **Enter** to add it. Add as many recipients as you need.
+  </Step>
+</Steps>
+
+### What's included in the email
+
+Each notification email contains:
+
+- Participant name and email
+- Session date and duration
+- Goal scores and overall rating
+- Link to view the full session transcript and recording
+
+<Tip>
+Add your whole team's emails to stay in the loop on assessment results without everyone needing to log into the dashboard.
+</Tip>
+
+## Webhook Notifications
+
+For programmatic integration, set up a webhook to receive session results as a POST request.
+
+<Steps>
+  <Step title="Go to scenario Settings">
+    Open the **Settings** tab on your scenario.
+  </Step>
+  <Step title="Set the Webhook URL">
+    Under **Session Options**, paste your webhook endpoint URL.
+  </Step>
+  <Step title="Save">
+    The webhook fires automatically when any session for this scenario completes.
+  </Step>
+</Steps>
+
+### Webhook payload
+
+The POST request includes:
+
+```json
+{
+  "event": "meeting.completed",
+  "data": {
+    "meeting_id": 789,
+    "scenario_id": 456,
+    "person_name": "Jane Doe",
+    "duration": 1200,
+    "goals": [
+      {
+        "name": "Communication Clarity",
+        "score": 8,
+        "feedback": "Clear and structured responses..."
+      }
+    ],
+    "recording_url": "https://...",
+    "completed_at": "2024-01-20T09:25:00Z"
+  }
+}
+```
+
+<Note>
+Webhook URLs must be HTTPS. The request includes a signature header for verification. See the [API Reference](/api-reference/webhooks) for full details.
+</Note>
+
+## Managing Notifications
+
+| Action | How |
+|--------|-----|
+| Add a recipient | Type email and press Enter in the Notifications section |
+| Remove a recipient | Click the **X** next to the email address |
+| Disable all emails | Remove all email addresses from the list |
+| Change webhook URL | Update the URL in Session Options |
+| Disable webhook | Clear the webhook URL field |

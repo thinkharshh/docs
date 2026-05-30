@@ -1,0 +1,70 @@
+---
+title: Web Search
+description: "Let your AI persona search the web during conversations for real-time information."
+---
+
+# Web Search
+
+Web Search gives your AI persona the ability to look up information on the internet during a live session. This keeps conversations grounded in current, factual data.
+
+## How it works
+
+When enabled, the AI can search the web mid-conversation to:
+
+- Look up current facts, statistics, or news
+- Verify claims made by participants
+- Find relevant resources to share
+- Answer questions that require up-to-date information
+
+The search happens in real-time. The AI briefly pauses to look something up, then incorporates the findings into its response naturally.
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Sales Training" icon="phone">
+    AI prospect references real competitor products, pricing, and market data to create realistic objections.
+  </Card>
+  <Card title="Research Interviews" icon="magnifying-glass">
+    AI can verify participant claims and ask informed follow-up questions based on real data.
+  </Card>
+  <Card title="Customer Support" icon="headset">
+    AI simulates a customer who has researched your actual product documentation and pricing.
+  </Card>
+  <Card title="Onboarding" icon="graduation-cap">
+    AI references your real product pages, docs, and knowledge base during training conversations.
+  </Card>
+</CardGroup>
+
+## Enabling Web Search
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to configure.
+  </Step>
+  <Step title="Go to Settings">
+    Click the **Settings** tab.
+  </Step>
+  <Step title="Enable Web Search">
+    Toggle on **Web Search** under capabilities.
+  </Step>
+</Steps>
+
+## Guiding web search behavior
+
+You can control how the AI uses web search through your [meeting script](/customization/meeting-script):
+
+```markdown
+## Web Search Usage
+- Look up the candidate's company before starting the conversation
+- If the participant mentions a specific technology, verify its current status
+- Don't search during rapid back-and-forth -- only when there's a natural pause
+- Reference sources naturally: "I saw on your website that..."
+```
+
+<Tip>
+Web search works best when the AI has a reason to look things up. Mention specific topics, companies, or domains in your script that the AI should research during the conversation.
+</Tip>
+
+<Warning>
+Web search adds latency when the AI decides to look something up. For time-critical scenarios, guide the AI to search sparingly by adding instructions about when (and when not) to search.
+</Warning>

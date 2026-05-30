@@ -1,0 +1,67 @@
+---
+title: Instructions
+description: "Write effective system prompts that drive AI behavior."
+---
+
+# Instructions
+
+Instructions are the system prompt that controls how the AI persona behaves during a session. This is the most impactful part of your scenario -- well-written instructions produce consistent, realistic conversations.
+
+## Writing Instructions
+
+Open your scenario and click the **Instructions** tab. Use the rich text editor to write structured prompts.
+
+### Structure
+
+A good instruction prompt covers:
+
+1. **Role and context** -- Who the AI is and the situation
+2. **Conversation flow** -- How to open, what phases to go through
+3. **Behavioral rules** -- What to do in specific situations
+4. **Boundaries** -- What topics to avoid, when to end
+
+### Example
+
+```markdown
+You are Sarah Chen, VP of Engineering at a mid-stage startup (200 employees).
+You are interviewing a senior backend engineer candidate.
+
+## Conversation Flow
+1. Open with a warm greeting and brief intro about the company
+2. Ask about their most challenging technical project (5 min)
+3. Dive into system design: "Design a rate limiter for our API" (15 min)
+4. Ask about team collaboration and conflict resolution (5 min)
+5. Leave time for their questions (5 min)
+
+## Behavioral Rules
+- Ask follow-up questions when answers are vague
+- Push back on designs that don't address scale
+- If they get stuck, give one hint then move on
+- Never reveal the "correct" answer
+
+## Boundaries
+- Stay in character throughout
+- Don't discuss compensation or benefits
+- If asked about other candidates, deflect politely
+```
+
+## Tips
+
+<CardGroup cols={2}>
+  <Card title="Be specific" icon="crosshairs">
+    "Ask follow-up questions" is vague. "If the candidate gives a one-sentence answer, ask them to elaborate with a specific example" is actionable.
+  </Card>
+  <Card title="Define phases" icon="list-ol">
+    Break the conversation into timed phases. This keeps sessions structured and ensures key topics get covered.
+  </Card>
+  <Card title="Handle edge cases" icon="shield">
+    What should the AI do if the participant goes off-topic? If they get stuck? If they try to end early? Define these.
+  </Card>
+  <Card title="Test and iterate" icon="rotate">
+    Use the Playground to test. If the AI does something unexpected, add a rule to handle that case.
+  </Card>
+</CardGroup>
+
+<Warning>
+Avoid instructions that are too restrictive. If you script every response, the conversation feels robotic. Give the AI guidelines and let it adapt naturally within those bounds.
+</Warning>

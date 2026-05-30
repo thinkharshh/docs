@@ -1,6 +1,7 @@
 ---
-title: 'Transcripts API'
+title: 'Transcripts'
 description: 'Access meeting transcripts (sentence transcripts recommended)'
+openapi: 'GET /transcripts/meeting/{meetingId}'
 ---
 
 ## Overview
@@ -11,28 +12,18 @@ Transcripts provide a structured record of meeting conversations.
   **Recommended:** Use **sentence transcripts** (`/sentenced-transcripts/*`) for the best developer experience (speaker labels, ordering, timestamps).
 </Note>
 
-<Card
-  title="Need recordings instead?"
-  icon="video"
-  href="/api-reference/recordings"
->
-  Recording endpoints are documented separately.
-</Card>
-
 ## Get All Sentence Transcripts for a Scenario
 
-Retrieve all sentence transcripts for meetings conducted with a specific scenario.
-
-<ParamField body="none" path="scenarioId" type="integer" required>
+<ParamField path="scenarioId" type="integer" required>
   The scenario ID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/sentenced-transcripts/scenario/456 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/sentenced-transcripts/scenario/456 \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 {
   "success": true,
   "data": {
@@ -68,26 +59,24 @@ curl -X GET https://api.waterrai.com/sentenced-transcripts/scenario/456 \
 
 ## Get Sentence Transcripts for a Meeting
 
-Retrieve sentence transcripts for a specific meeting.
-
-<ParamField body="none" path="transcript_id" type="integer" required>
+<ParamField path="transcript_id" type="integer" required>
   The transcript ID
 </ParamField>
 
-<ParamField body="none" path="meeting_id" type="integer" required>
+<ParamField path="meeting_id" type="integer" required>
   The meeting ID
 </ParamField>
 
-<ParamField body="none" path="scenario_id" type="integer" required>
+<ParamField path="scenario_id" type="integer" required>
   The scenario ID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/sentenced-transcripts/301/789/456 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/sentenced-transcripts/301/789/456 \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 {
   "success": true,
   "data": {
@@ -101,13 +90,10 @@ curl -X GET https://api.waterrai.com/sentenced-transcripts/301/789/456 \
         "sequence_number": 1
       }
     ],
-    "meeting_info": {
-      "id": 789
-    },
+    "meeting_info": { "id": 789 },
     "scenario_info": {
       "id": 456,
-      "name": "Product Manager Interview Practice",
-      "description": "Practice interview scenarios"
+      "name": "Product Manager Interview Practice"
     }
   }
 }
@@ -115,18 +101,16 @@ curl -X GET https://api.waterrai.com/sentenced-transcripts/301/789/456 \
 
 ## Get Transcripts by Meeting ID (non-sentenced)
 
-Retrieve all transcripts (non-sentenced) for a specific meeting.
-
-<ParamField body="none" path="meetingId" type="integer" required>
+<ParamField path="meetingId" type="integer" required>
   The meeting ID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/transcripts/meeting/789 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/transcripts/meeting/789 \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 [
   {
     "id": 301,
@@ -140,5 +124,5 @@ curl -X GET https://api.waterrai.com/transcripts/meeting/789 \
 ```
 
 <Tip>
-  If you’re building product features on top of transcripts, prefer sentence transcripts because they’re already normalized for parsing and ordering.
+  If you're building product features on top of transcripts, prefer sentence transcripts because they're already normalized for parsing and ordering.
 </Tip>

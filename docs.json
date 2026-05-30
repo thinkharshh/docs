@@ -1,67 +1,365 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Water AI",
+  "name": "Waterr Meet",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/favicon.svg",
+  "api": {
+    "openapi": [
+      "openapi.yaml"
+    ],
+    "playground": {
+      "display": "interactive"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Help Center",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
-              "quickstart",
-              "api-reference/introduction"
+              "introduction",
+              "getting-started/quickstart",
+              "getting-started/creating-scenarios",
+              "getting-started/personas",
+              "getting-started/core-concepts"
             ]
           },
           {
-            "group": "Pre-Setup",
+            "group": "Capabilities",
             "pages": [
-              "api-reference/users"
+              "capabilities/vision",
+              "capabilities/multi-language",
+              "capabilities/deep-thinking",
+              "capabilities/web-search",
+              "capabilities/social",
+              "capabilities/notifications"
+            ]
+          },
+          {
+            "group": "Sharing with Others",
+            "pages": [
+              "sharing/links",
+              "sharing/embed-in-website",
+              "sharing/scheduling",
+              "sharing/booking-page"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "security/consent",
+              "security/data-encryption",
+              "security/privacy"
+            ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "customization/meeting-script",
+              "customization/post-meeting-evaluations",
+              "customization/participant-experience",
+              "customization/white-label"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/quickstart",
+              "api-reference/authentication",
+              "api-reference/session-lifecycle",
+              "api-reference/errors",
+              "api-reference/rate-limits"
             ]
           },
           {
             "group": "Core APIs",
             "pages": [
+              "api-reference/users",
               "api-reference/personas",
+              "api-reference/voices",
               "api-reference/scenarios",
+              "api-reference/goals",
               "api-reference/meetings",
               "api-reference/analysis",
               "api-reference/recordings",
-              "api-reference/transcripts",
-              "api-reference/api-secrets"
+              "api-reference/transcripts"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "api-reference/prompting-guide",
+              "api-reference/examples",
+              "api-reference/sdks"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "api-reference/webhooks"
+            ]
+          },
+          {
+            "group": "Analyses",
+            "pages": [
+              "api-reference/endpoint/get-analyses",
+              "api-reference/endpoint/post-analyses",
+              "api-reference/endpoint/delete-analyses-id",
+              "api-reference/endpoint/get-analyses-id",
+              "api-reference/endpoint/put-analyses-id",
+              "api-reference/endpoint/get-analyses-meeting-meetingid",
+              "api-reference/endpoint/get-analyses-scenario-scenarioid",
+              "api-reference/endpoint/post-analyses-trigger-meetingid"
+            ]
+          },
+          {
+            "group": "Goals",
+            "pages": [
+              "api-reference/endpoint/get-goals",
+              "api-reference/endpoint/post-goals",
+              "api-reference/endpoint/delete-goals-id",
+              "api-reference/endpoint/get-goals-id",
+              "api-reference/endpoint/put-goals-id",
+              "api-reference/endpoint/post-goals-bulk",
+              "api-reference/endpoint/get-goals-membership-membershipid",
+              "api-reference/endpoint/get-goals-membership-membershipid-all"
+            ]
+          },
+          {
+            "group": "Meetings",
+            "pages": [
+              "api-reference/endpoint/get-meetings",
+              "api-reference/endpoint/post-meetings",
+              "api-reference/endpoint/get-meetings-id",
+              "api-reference/endpoint/delete-meetings-meetingid",
+              "api-reference/endpoint/put-meetings-meetingid",
+              "api-reference/endpoint/put-meetings-meetingid-end",
+              "api-reference/endpoint/post-meetings-meetingid-notify-end",
+              "api-reference/endpoint/get-meetings-meetingid-participants",
+              "api-reference/endpoint/post-meetings-meetingid-participants",
+              "api-reference/endpoint/delete-meetings-meetingid-participants-participantid",
+              "api-reference/endpoint/patch-meetings-meetingid-soft-delete",
+              "api-reference/endpoint/get-meetings-daily-dailymeetingid",
+              "api-reference/endpoint/get-meetings-durations",
+              "api-reference/endpoint/get-meetings-membership-membershipid"
+            ]
+          },
+          {
+            "group": "Personas",
+            "pages": [
+              "api-reference/endpoint/get-personas",
+              "api-reference/endpoint/post-personas",
+              "api-reference/endpoint/delete-personas-id",
+              "api-reference/endpoint/get-personas-id",
+              "api-reference/endpoint/put-personas-id",
+              "api-reference/endpoint/post-personas-bulk",
+              "api-reference/endpoint/get-personas-membership-membershipid",
+              "api-reference/endpoint/get-personas-organization-orgid"
+            ]
+          },
+          {
+            "group": "Recordings",
+            "pages": [
+              "api-reference/endpoint/get-recordings",
+              "api-reference/endpoint/post-recordings",
+              "api-reference/endpoint/delete-recordings-id",
+              "api-reference/endpoint/get-recordings-id",
+              "api-reference/endpoint/put-recordings-id",
+              "api-reference/endpoint/get-recordings-meeting-meetingid",
+              "api-reference/endpoint/get-recordings-membership-membershipid",
+              "api-reference/endpoint/get-recordings-scenario-scenarioid",
+              "api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid",
+              "api-reference/endpoint/get-recordings-url-meetingid"
+            ]
+          },
+          {
+            "group": "Scenarios",
+            "pages": [
+              "api-reference/endpoint/get-scenarios",
+              "api-reference/endpoint/post-scenarios",
+              "api-reference/endpoint/delete-scenarios-id",
+              "api-reference/endpoint/put-scenarios-id",
+              "api-reference/endpoint/get-scenarios-id-export",
+              "api-reference/endpoint/get-scenarios-id-files",
+              "api-reference/endpoint/delete-scenarios-id-files-fileid",
+              "api-reference/endpoint/get-scenarios-id-files-fileid-chunks",
+              "api-reference/endpoint/post-scenarios-id-files-fileid-convert-and-process",
+              "api-reference/endpoint/delete-scenarios-id-files-fileid-permanent",
+              "api-reference/endpoint/post-scenarios-id-files-fileid-reanalyze",
+              "api-reference/endpoint/get-scenarios-id-files-fileid-status",
+              "api-reference/endpoint/post-scenarios-id-files-reanalyze-all",
+              "api-reference/endpoint/post-scenarios-id-files-upload",
+              "api-reference/endpoint/post-scenarios-id-share",
+              "api-reference/endpoint/delete-scenarios-scenarioid-session-options",
+              "api-reference/endpoint/get-scenarios-scenarioid-session-options",
+              "api-reference/endpoint/put-scenarios-scenarioid-session-options",
+              "api-reference/endpoint/post-scenarios-bulk",
+              "api-reference/endpoint/post-scenarios-create-with-gpt",
+              "api-reference/endpoint/post-scenarios-import",
+              "api-reference/endpoint/get-scenarios-membership-membershipid",
+              "api-reference/endpoint/get-scenarios-membership-membershipid-meetings",
+              "api-reference/endpoint/post-scenarios-transcript-meetingid"
+            ]
+          },
+          {
+            "group": "Transcripts",
+            "pages": [
+              "api-reference/endpoint/get-transcripts",
+              "api-reference/endpoint/post-transcripts",
+              "api-reference/endpoint/delete-transcripts-id",
+              "api-reference/endpoint/get-transcripts-id",
+              "api-reference/endpoint/put-transcripts-id",
+              "api-reference/endpoint/post-transcripts-transcriptid-chunks",
+              "api-reference/endpoint/get-transcripts-meeting-meetingid"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api-reference/endpoint/get-users",
+              "api-reference/endpoint/post-users",
+              "api-reference/endpoint/delete-users-userid",
+              "api-reference/endpoint/get-users-userid",
+              "api-reference/endpoint/put-users-userid",
+              "api-reference/endpoint/get-users-username-username"
+            ]
+          },
+          {
+            "group": "Voices",
+            "pages": [
+              "api-reference/endpoint/post-voices",
+              "api-reference/endpoint/delete-voices-id",
+              "api-reference/endpoint/get-voices-id",
+              "api-reference/endpoint/put-voices-id",
+              "api-reference/endpoint/get-voices-membership-membershipid"
             ]
           }
         ]
       }
     ],
-    "global": {}
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Community",
+          "href": "https://discord.gg/waterr",
+          "icon": "discord"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/waterr-ai",
+          "icon": "github"
+        }
+      ]
+    }
   },
   "logo": {
-    "light": "/logo/light.png",
-    "dark": "/logo/dark.png"
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": []
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:harshit@waterr.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://meet.waterr.ai"
+    }
   },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+  "footer": {
+    "socials": {
+      "x": "https://x.com/waterr_ai",
+      "linkedin": "https://linkedin.com/company/waterr-ai"
+    }
   },
-  "footer": {}
+  "redirects": [
+    {
+      "source": "/quickstart",
+      "destination": "/getting-started/quickstart"
+    },
+    {
+      "source": "/concepts",
+      "destination": "/getting-started/core-concepts"
+    },
+    {
+      "source": "/scenarios/overview",
+      "destination": "/getting-started/creating-scenarios"
+    },
+    {
+      "source": "/scenarios/creating",
+      "destination": "/getting-started/creating-scenarios"
+    },
+    {
+      "source": "/scenarios/personas",
+      "destination": "/getting-started/personas"
+    },
+    {
+      "source": "/scenarios/instructions",
+      "destination": "/customization/meeting-script"
+    },
+    {
+      "source": "/scenarios/managing",
+      "destination": "/customization/participant-experience"
+    },
+    {
+      "source": "/goals/overview",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/goals/creating-goals",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/goals/scoring",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/responses/viewing",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/responses/analytics",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/responses/export",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/sharing/embedding",
+      "destination": "/sharing/embed-in-website"
+    },
+    {
+      "source": "/guides/get-shareable-link",
+      "destination": "/sharing/links"
+    },
+    {
+      "source": "/guides/embed-on-website",
+      "destination": "/sharing/embed-in-website"
+    },
+    {
+      "source": "/guides/view-responses",
+      "destination": "/customization/post-meeting-evaluations"
+    },
+    {
+      "source": "/guides/schedule-session",
+      "destination": "/sharing/scheduling"
+    }
+  ]
 }

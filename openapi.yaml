@@ -1,0 +1,3359 @@
+openapi: 3.0.0
+info:
+  title: WaterrAI API
+  version: 1.0.0
+  description: >-
+    REST API for the WaterrAI meeting platform — create scenarios, spin up AI-driven meetings, fetch transcripts and
+    analyses.
+  contact:
+    name: Support
+    email: harshit@waterr.ai
+servers:
+  - url: https://api.waterr.ai/v1
+    description: Production
+  - url: http://localhost:3000
+    description: Local development (CoreBackend on your machine)
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: wai_...
+      description: 'API key from waterr.ai/settings?tab=api-keys. Send as `Authorization: Bearer wai_<your_key>`.'
+  schemas:
+    GoalResult:
+      type: object
+      properties:
+        id:
+          type: string
+        analysis_id:
+          type: string
+        goal_id:
+          type: string
+        score:
+          type: number
+        feedback:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Analysis:
+      type: object
+      properties:
+        id:
+          type: string
+        meeting_id:
+          type: string
+        average_score:
+          type: number
+        total_score:
+          type: number
+        summary:
+          type: string
+        strengths:
+          type: string
+        growth_areas:
+          type: string
+        repetitions:
+          type: string
+        filler_words:
+          type: string
+        weak_words:
+          type: string
+        sentence_starters:
+          type: string
+        goal_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoalResult'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        google_user_id:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+            - manager
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: '#/components/schemas/User'
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+    MeetingControls:
+      type: object
+      properties:
+        id:
+          type: string
+        scenario_id:
+          type: string
+        allow_recording:
+          type: boolean
+        allow_transcription:
+          type: boolean
+        allow_chat:
+          type: boolean
+        allow_screen_share:
+          type: boolean
+        allow_participant_video:
+          type: boolean
+        allow_participant_audio:
+          type: boolean
+        allow_live_vision:
+          type: boolean
+        allow_web_search:
+          type: boolean
+        use_gpt_vision:
+          type: boolean
+        max_participants:
+          type: integer
+        waiting_room_enabled:
+          type: boolean
+        auto_admit:
+          type: boolean
+        end_call_enabled:
+          type: boolean
+        controls:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Scenario:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        prompt:
+          type: string
+        user_prompt:
+          type: string
+        type:
+          type: string
+          enum:
+            - interview
+            - roleplay
+            - upskill
+            - brainstorm
+        persona_id:
+          type: string
+        org_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Voice:
+      type: object
+      properties:
+        id:
+          type: string
+        partner_voice_id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+        user_basic_info_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+security:
+  - apiKeyAuth: []
+tags:
+  - name: Users
+  - name: Personas
+  - name: Voices
+  - name: Scenarios
+  - name: Goals
+  - name: Meetings
+  - name: Analyses
+  - name: Recordings
+  - name: Transcripts
+paths:
+  /analyses:
+    get:
+      summary: Get all analyses
+      tags:
+        - Analyses
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of all analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Analysis'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+    post:
+      summary: Create a new analysis
+      tags:
+        - Analyses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - meeting_id
+              properties:
+                meeting_id:
+                  type: string
+                average_score:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                total_score:
+                  type: integer
+                summary:
+                  type: string
+                strengths:
+                  type: string
+                growth_areas:
+                  type: string
+                repetitions:
+                  type: array
+                  items:
+                    type: string
+                  description: List of repeated words or phrases
+                filler_words:
+                  type: array
+                  items:
+                    type: string
+                  description: List of filler words used
+                weak_words:
+                  type: array
+                  items:
+                    type: string
+                  description: List of weak or uncertain words used
+                sentence_starters:
+                  type: array
+                  items:
+                    type: string
+                  description: List of sentence starters used
+                goal_results:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - goal_id
+                    properties:
+                      goal_id:
+                        type: string
+                      short_description:
+                        type: string
+                      long_description:
+                        type: string
+                      score:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+      responses:
+        '201':
+          description: Analysis created successfully
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /analyses/{id}:
+    get:
+      summary: Get an analysis by ID
+      tags:
+        - Analyses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analysis details with goal results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  meeting_id:
+                    type: string
+                  average_score:
+                    type: integer
+                  total_score:
+                    type: integer
+                  summary:
+                    type: string
+                  strengths:
+                    type: string
+                  growth_areas:
+                    type: string
+                  repetitions:
+                    type: array
+                    items:
+                      type: string
+                    description: List of repeated words or phrases
+                  filler_words:
+                    type: array
+                    items:
+                      type: string
+                    description: List of filler words used
+                  weak_words:
+                    type: array
+                    items:
+                      type: string
+                    description: List of weak or uncertain words used
+                  sentence_starters:
+                    type: array
+                    items:
+                      type: string
+                    description: List of sentence starters used
+                  goal_results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GoalResult'
+        '404':
+          description: Analysis not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update an analysis
+      tags:
+        - Analyses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                average_score:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                total_score:
+                  type: integer
+                summary:
+                  type: string
+                strengths:
+                  type: string
+                growth_areas:
+                  type: string
+                repetitions:
+                  type: array
+                  items:
+                    type: string
+                  description: List of repeated words or phrases
+                filler_words:
+                  type: array
+                  items:
+                    type: string
+                  description: List of filler words used
+                weak_words:
+                  type: array
+                  items:
+                    type: string
+                  description: List of weak or uncertain words used
+                sentence_starters:
+                  type: array
+                  items:
+                    type: string
+                  description: List of sentence starters used
+                goal_results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      goal_id:
+                        type: string
+                      short_description:
+                        type: string
+                      long_description:
+                        type: string
+                      score:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+      responses:
+        '200':
+          description: Analysis updated successfully
+        '404':
+          description: Analysis not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete an analysis
+      tags:
+        - Analyses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Analysis deleted successfully
+        '404':
+          description: Analysis not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /analyses/meeting/{meetingId}:
+    get:
+      summary: Get analysis by meeting ID
+      tags:
+        - Analyses
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analysis details with goal results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  meeting_id:
+                    type: string
+                  average_score:
+                    type: integer
+                  total_score:
+                    type: integer
+                  summary:
+                    type: string
+                  strengths:
+                    type: string
+                  growth_areas:
+                    type: string
+                  repetitions:
+                    type: array
+                    items:
+                      type: string
+                    description: List of repeated words or phrases
+                  filler_words:
+                    type: array
+                    items:
+                      type: string
+                    description: List of filler words used
+                  weak_words:
+                    type: array
+                    items:
+                      type: string
+                    description: List of weak or uncertain words used
+                  sentence_starters:
+                    type: array
+                    items:
+                      type: string
+                    description: List of sentence starters used
+                  goal_results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GoalResult'
+        '404':
+          description: Analysis not found for this meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /analyses/scenario/{scenarioId}:
+    get:
+      summary: Get analyses by scenario ID
+      tags:
+        - Analyses
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of analyses for the scenario with goal results and meeting details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    meeting_id:
+                      type: string
+                    average_score:
+                      type: integer
+                    total_score:
+                      type: integer
+                    summary:
+                      type: string
+                    strengths:
+                      type: string
+                    growth_areas:
+                      type: string
+                    repetitions:
+                      type: array
+                      items:
+                        type: string
+                      description: List of repeated words or phrases
+                    filler_words:
+                      type: array
+                      items:
+                        type: string
+                      description: List of filler words used
+                    weak_words:
+                      type: array
+                      items:
+                        type: string
+                      description: List of weak or uncertain words used
+                    sentence_starters:
+                      type: array
+                      items:
+                        type: string
+                      description: List of sentence starters used
+                    goal_results:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GoalResult'
+                    Meeting:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        scenario_id:
+                          type: string
+                        person_name:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+        '404':
+          description: No analyses found for this scenario
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /analyses/trigger/{meetingId}:
+    post:
+      summary: Trigger manual analysis for a meeting
+      tags:
+        - Analyses
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analysis triggered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Analysis already exists or bad request
+        '404':
+          description: Meeting or transcripts not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /goals:
+    get:
+      summary: Get all goals
+      tags:
+        - Goals
+      responses:
+        '200':
+          description: A list of goals
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new goal
+      tags:
+        - Goals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - user_basic_info_id
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the goal
+                description:
+                  type: string
+                  description: Detailed description of the goal
+                instructions:
+                  type: string
+                  description: Instructions for achieving the goal
+                user_basic_info_id:
+                  type: string
+                  description: ID of the user who owns this goal
+                metrics:
+                  type: object
+                  description: JSON object containing goal metrics
+                scenario_id:
+                  type: string
+                  description: ID of the scenario this goal is directly linked to (optional)
+                active:
+                  type: boolean
+                  description: Whether this goal is active for the scenario (default true)
+                scenarios:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of scenario IDs to associate with this goal (legacy support)
+      responses:
+        '201':
+          description: Goal created successfully
+        '400':
+          description: Invalid input data
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /goals/{id}:
+    get:
+      summary: Get a goal by ID
+      tags:
+        - Goals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Goal details
+        '404':
+          description: Goal not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update a goal
+      tags:
+        - Goals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                instructions:
+                  type: string
+                user_basic_info_id:
+                  type: string
+                metrics:
+                  type: object
+                scenario_id:
+                  type: string
+                  description: ID of the scenario this goal is directly linked to
+                active:
+                  type: boolean
+                  description: Whether this goal is active for the scenario
+                scenarios:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of scenario IDs to associate with this goal (legacy support)
+      responses:
+        '200':
+          description: Goal updated successfully
+        '404':
+          description: Goal not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a goal
+      tags:
+        - Goals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Goal deleted successfully
+        '404':
+          description: Goal not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /goals/membership/{membershipId}:
+    get:
+      summary: Get goals by membership ID
+      tags:
+        - Goals
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of goals for the membership
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /goals/bulk:
+    post:
+      summary: Create multiple goals in bulk
+      tags:
+        - Goals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - goals
+              properties:
+                goals:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - user_basic_info_id
+                    properties:
+                      name:
+                        type: string
+                        maxLength: 100
+                      description:
+                        type: string
+                      instructions:
+                        type: string
+                      user_basic_info_id:
+                        type: string
+                      metrics:
+                        type: object
+                      scenario_id:
+                        type: string
+                        description: ID of the scenario this goal is directly linked to
+                      active:
+                        type: boolean
+                        description: Whether this goal is active for the scenario (default true)
+                      scenarios:
+                        type: array
+                        items:
+                          type: string
+                        description: Array of scenario IDs to associate with this goal (legacy support)
+      responses:
+        '201':
+          description: Goals created successfully
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /goals/membership/{membershipId}/all:
+    get:
+      summary: Get all goals for a user including waterr organization goals
+      tags:
+        - Goals
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of goals including user's goals and waterr organization goals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        description:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                        Scenarios:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
+                              type:
+                                type: string
+                              UserBasicInfo:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  name:
+                                    type: string
+                                  Organization:
+                                    type: object
+                                    properties:
+                                      id:
+                                        type: string
+                                      name:
+                                        type: string
+                        UserBasicInfo:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            Organization:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /meetings:
+    get:
+      summary: Get all meetings
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of all meetings
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+    post:
+      summary: Create a new meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - person_name
+                - user_id
+                - org_id
+              properties:
+                person_name:
+                  type: string
+                user_id:
+                  type: string
+                org_id:
+                  type: string
+                scenario_id:
+                  type: string
+      responses:
+        '201':
+          description: Meeting created successfully
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+        '403':
+          description: Session limit reached or subscription inactive
+        '500':
+          description: Server error
+  /meetings/{id}:
+    get:
+      summary: Get a meeting by ID
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The meeting ID (must be a valid integer)
+      responses:
+        '200':
+          description: Meeting details
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+  /meetings/membership/{membershipId}:
+    get:
+      summary: Get meetings by membership ID
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of meetings for the user
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+  /meetings/daily/{dailyMeetingId}:
+    get:
+      summary: Get meeting by Daily.co meeting ID
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: dailyMeetingId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Daily.co meeting ID
+      responses:
+        '200':
+          description: Meeting details
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+  /meetings/{meetingId}:
+    put:
+      summary: Update a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                meeting_url:
+                  type: string
+                room_token:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - created
+                    - started
+                    - ended
+                scenario_id:
+                  type: string
+      responses:
+        '200':
+          description: Meeting updated successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+    delete:
+      summary: Delete a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Meeting deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+  /meetings/{meetingId}/end:
+    put:
+      summary: End a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration_seconds:
+                  type: integer
+      responses:
+        '200':
+          description: Meeting ended successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+  /meetings/{meetingId}/notify-end:
+    post:
+      summary: Trigger satisfying meeting end notifications (emails)
+      tags:
+        - Meetings
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Daily Meeting ID
+      responses:
+        '200':
+          description: Notifications sent successfully
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /meetings/{meetingId}/soft-delete:
+    patch:
+      summary: Soft delete a meeting (mark as deleted without removing from database)
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Meeting soft-deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Meeting not found
+        '500':
+          description: Server error
+  /meetings/durations:
+    get:
+      summary: Get meeting durations for the current user
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of meeting durations for the user
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+  /meetings/{meetingId}/participants:
+    post:
+      summary: Add or update participants for a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - participants
+              properties:
+                participants:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      role:
+                        type: string
+                        enum:
+                          - organizer
+                          - attendee
+                          - optional
+                      rsvp_status:
+                        type: string
+                        enum:
+                          - accepted
+                          - declined
+                          - tentative
+                          - needsAction
+                      source:
+                        type: string
+                        enum:
+                          - google_calendar
+                          - outlook
+                          - manual
+                          - daily
+                      is_self:
+                        type: boolean
+      responses:
+        '200':
+          description: Participants saved
+        '400':
+          description: Invalid input
+        '404':
+          description: Meeting not found
+    get:
+      summary: Get participants for a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of participants
+  /meetings/{meetingId}/participants/{participantId}:
+    delete:
+      summary: Remove a participant from a meeting
+      tags:
+        - Meetings
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Participant removed
+        '404':
+          description: Participant not found
+  /personas:
+    get:
+      summary: Get all personas
+      tags:
+        - Personas
+      responses:
+        '200':
+          description: A list of personas
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new persona
+      tags:
+        - Personas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - job_title
+                - user_basic_info_id
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the persona
+                job_title:
+                  type: string
+                  maxLength: 100
+                  description: Job title of the persona
+                voice_id:
+                  type: string
+                  description: ID of the voice associated with the persona
+                user_basic_info_id:
+                  type: string
+                  description: ID of the user who owns this persona
+                demeanor:
+                  type: string
+                  enum:
+                    - friendly
+                    - analytical
+                    - empathetic
+                    - curious
+                    - enthusiastic
+                    - critical
+                    - casual
+                    - blunt
+                    - assertive
+                    - neutral
+                  description: The personality style of the persona
+                background:
+                  type: string
+                  description: Detailed background information about the persona
+                avatar:
+                  type: string
+                  maxLength: 255
+                  description: URL or path to the persona's avatar image
+      responses:
+        '201':
+          description: Persona created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  job_title:
+                    type: string
+                  voice_id:
+                    type: string
+                  user_basic_info_id:
+                    type: string
+                  demeanor:
+                    type: string
+                  background:
+                    type: string
+                  avatar:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid input data
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /personas/{id}:
+    get:
+      summary: Get a persona by ID
+      tags:
+        - Personas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Persona details
+        '404':
+          description: Persona not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update a persona
+      tags:
+        - Personas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                job_title:
+                  type: string
+                  maxLength: 100
+                voice_id:
+                  type: string
+                user_basic_info_id:
+                  type: string
+                demeanor:
+                  type: string
+                  enum:
+                    - friendly
+                    - analytical
+                    - empathetic
+                    - curious
+                    - enthusiastic
+                    - critical
+                    - casual
+                    - blunt
+                    - assertive
+                    - neutral
+                background:
+                  type: string
+                avatar:
+                  type: string
+                  maxLength: 255
+      responses:
+        '200':
+          description: Persona updated successfully
+        '404':
+          description: Persona not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a persona
+      tags:
+        - Personas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Persona deleted successfully
+        '404':
+          description: Persona not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /personas/membership/{membershipId}:
+    get:
+      summary: Get personas by membership ID
+      tags:
+        - Personas
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of personas for the membership
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /personas/bulk:
+    post:
+      summary: Create multiple personas in bulk
+      tags:
+        - Personas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - personas
+              properties:
+                personas:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - job_title
+                      - user_basic_info_id
+                    properties:
+                      name:
+                        type: string
+                        maxLength: 100
+                      job_title:
+                        type: string
+                        maxLength: 100
+                      user_basic_info_id:
+                        type: string
+                      voice_id:
+                        type: string
+                      demeanor:
+                        type: string
+                      background:
+                        type: string
+                      avatar:
+                        type: string
+                        maxLength: 255
+      responses:
+        '201':
+          description: Personas created successfully
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /personas/organization/{orgId}:
+    get:
+      summary: Get all personas for an organization
+      tags:
+        - Personas
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of personas for the organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        job_title:
+                          type: string
+                        demeanor:
+                          type: string
+                        background:
+                          type: string
+                        avatar:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                        Voice:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            provider:
+                              type: string
+                            partner_voice_id:
+                              type: string
+                        Scenarios:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
+                              type:
+                                type: string
+                        UserBasicInfo:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            email:
+                              type: string
+        '404':
+          description: Organization not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/url/{meetingId}:
+    get:
+      summary: Get recording CloudFront URL by Daily meeting ID
+      tags:
+        - Recordings
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The Daily.co meeting ID
+      responses:
+        '200':
+          description: CloudFront recording URL
+        '404':
+          description: No recording found for this meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/url-with-thumbnail/{meetingId}:
+    get:
+      summary: Get recording CloudFront URL with thumbnail by Daily meeting ID
+      tags:
+        - Recordings
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The Daily.co meeting ID
+      responses:
+        '200':
+          description: Recording URL with thumbnail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  video_url:
+                    type: string
+                  thumbnail_url:
+                    type: string
+                    nullable: true
+        '404':
+          description: No recording found for this meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings:
+    get:
+      summary: Get all recordings
+      tags:
+        - Recordings
+      responses:
+        '200':
+          description: A list of recordings
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new recording
+      tags:
+        - Recordings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - url
+                - meeting_id
+                - user_id
+              properties:
+                title:
+                  type: string
+                url:
+                  type: string
+                meeting_id:
+                  type: string
+                duration:
+                  type: integer
+                thumbnail_url:
+                  type: string
+                size_bytes:
+                  type: integer
+                description:
+                  type: string
+                user_id:
+                  type: string
+      responses:
+        '201':
+          description: Recording created successfully
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/{id}:
+    get:
+      summary: Get a recording by ID
+      tags:
+        - Recordings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recording details
+        '404':
+          description: Recording not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update a recording
+      tags:
+        - Recordings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                url:
+                  type: string
+                duration:
+                  type: integer
+                thumbnail_url:
+                  type: string
+                size_bytes:
+                  type: integer
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Recording updated successfully
+        '404':
+          description: Recording not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a recording
+      tags:
+        - Recordings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Recording deleted successfully
+        '404':
+          description: Recording not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/membership/{membershipId}:
+    get:
+      summary: Get recordings by membership ID
+      tags:
+        - Recordings
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of recordings for the user
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/meeting/{meetingId}:
+    get:
+      summary: Get recordings by meeting ID
+      tags:
+        - Recordings
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of recordings for the meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /recordings/scenario/{scenarioId}:
+    get:
+      summary: Get recordings by scenario ID
+      tags:
+        - Recordings
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the scenario to get recordings for
+      responses:
+        '200':
+          description: A list of recordings for the scenario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  scenarioId:
+                    type: string
+                  count:
+                    type: integer
+                  recordings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        meeting_id:
+                          type: string
+                        url:
+                          type: string
+                        duration:
+                          type: integer
+                        status:
+                          type: string
+                        Meeting:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            scenario_id:
+                              type: string
+                            person_name:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+        '404':
+          description: No recordings found for this scenario
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios:
+    get:
+      summary: Get all scenarios
+      tags:
+        - Scenarios
+      responses:
+        '200':
+          description: A list of scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenario'
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new scenario
+      tags:
+        - Scenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+                - persona_id
+                - org_id
+              properties:
+                name:
+                  type: string
+                  description: Name of the scenario
+                description:
+                  type: string
+                  description: Description of the scenario
+                prompt:
+                  type: string
+                  description: Prompt for the scenario
+                user_prompt:
+                  type: string
+                  description: Original user prompt entered on Create page
+                type:
+                  type: string
+                  enum:
+                    - interview
+                    - roleplay
+                    - upskill
+                    - brainstorm
+                persona_id:
+                  type: string
+                  description: ID of the associated persona
+                org_id:
+                  type: string
+                  description: Organization ID
+                data_model_id:
+                  type: string
+                  description: ID of the associated data model (optional)
+      responses:
+        '201':
+          description: Scenario created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  prompt:
+                    type: string
+                  type:
+                    type: string
+                  persona_id:
+                    type: string
+                  org_id:
+                    type: string
+        '400':
+          description: Invalid input data
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/transcript/{meetingId}:
+    post:
+      summary: Create a scenario from meeting transcript
+      tags:
+        - Scenarios
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scenario created successfully from transcript
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      scenario_id:
+                        type: string
+                      scenario_name:
+                        type: string
+                      scenario_type:
+                        type: string
+                      createdGoals:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            description:
+                              type: string
+                            instructions:
+                              type: string
+                            metrics:
+                              type: object
+        '404':
+          description: No transcript found for this meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/{id}/files/upload:
+    post:
+      summary: Upload files for a scenario
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '201':
+          description: Files uploaded successfully
+        '400':
+          description: Invalid input or file limit exceeded
+        '403':
+          description: Permission denied
+        '500':
+          description: Server error
+  /scenarios/{id}/files:
+    get:
+      summary: Get all files for a scenario
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of files
+        '403':
+          description: Permission denied
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}:
+    delete:
+      summary: Delete a file from a scenario (soft delete)
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File marked for deletion
+        '403':
+          description: Permission denied
+        '404':
+          description: File not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}/permanent:
+    delete:
+      summary: Permanently delete a file from a scenario
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File permanently deleted
+        '403':
+          description: Permission denied
+        '404':
+          description: File not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}/status:
+    get:
+      summary: Get file processing status
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File processing status
+        '403':
+          description: Permission denied
+        '404':
+          description: File not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}/chunks:
+    get:
+      summary: Get file chunks with content
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File chunks retrieved successfully
+        '403':
+          description: Permission denied
+        '404':
+          description: File not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}/reanalyze:
+    post:
+      summary: Re-analyze a file
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Re-analysis started
+        '403':
+          description: Permission denied
+        '404':
+          description: File not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/reanalyze-all:
+    post:
+      summary: Re-analyze all files for a scenario
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Re-analysis started for all files
+        '403':
+          description: Permission denied
+        '404':
+          description: Scenario not found
+        '500':
+          description: Server error
+  /scenarios/{id}/files/{fileId}/convert-and-process:
+    post:
+      summary: Convert PPT/PPTX file to PDF, upload to blob, and process for AI
+      tags:
+        - Scenarios
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Conversion and processing started
+        '400':
+          description: Invalid file type or file not found
+        '403':
+          description: Permission denied
+        '500':
+          description: Server error
+  /scenarios/membership/{membershipId}:
+    get:
+      summary: Get scenarios by membership ID
+      tags:
+        - Scenarios
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of scenarios for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenario'
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/create-with-gpt:
+    post:
+      summary: Create a scenario and persona using GPT
+      description: Takes simple user input and uses GPT to generate a detailed persona and scenario with a comprehensive prompt
+      tags:
+        - Scenarios
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - userInput
+                - userId
+              properties:
+                userInput:
+                  type: string
+                  description: Simple text description of what the user wants to practice
+                  example: I want to practice negotiating with a difficult client
+                userId:
+                  type: string
+                  description: ID of the user creating the scenario
+                  example: user123
+                orgId:
+                  type: string
+                  description: Organization ID (optional)
+                  example: org456
+                file:
+                  type: string
+                  format: binary
+                  description: Resume file (PDF, DOC, or DOCX)
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Success
+  /scenarios/{id}:
+    put:
+      summary: Update a scenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                prompt:
+                  type: string
+                user_prompt:
+                  type: string
+                  description: Original user prompt entered on Create page
+                type:
+                  type: string
+                  enum:
+                    - interview
+                    - roleplay
+                    - upskill
+                    - brainstorm
+                persona_id:
+                  type: string
+                org_id:
+                  type: string
+                  maxLength: 100
+                data_model_id:
+                  type: string
+                  description: ID of the associated data model (optional)
+                goals:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Scenario updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario'
+        '404':
+          description: Scenario not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a scenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Scenario deleted successfully
+        '404':
+          description: Scenario not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/{id}/share:
+    post:
+      summary: Share a scenario with another user
+      tags:
+        - Scenarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email of the user to share the scenario with
+      responses:
+        '200':
+          description: Scenario shared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sharedWith:
+                        type: string
+                      newScenarioId:
+                        type: string
+                      emailSent:
+                        type: boolean
+        '400':
+          description: Invalid input or user cannot share with themselves
+        '403':
+          description: User does not have permission to share this scenario
+        '404':
+          description: Scenario not found or target user not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/{id}/export:
+    get:
+      summary: Export a scenario as JSON
+      tags:
+        - Scenarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scenario exported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exportVersion:
+                    type: string
+                  exportedAt:
+                    type: string
+                  originalCreator:
+                    type: object
+                  scenario:
+                    type: object
+        '403':
+          description: Permission denied
+        '404':
+          description: Scenario not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/import:
+    post:
+      summary: Import a scenario from JSON
+      tags:
+        - Scenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exportVersion:
+                  type: string
+                scenario:
+                  type: object
+      responses:
+        '201':
+          description: Scenario imported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Invalid import file format
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/bulk:
+    post:
+      summary: Create multiple scenarios in bulk
+      tags:
+        - Scenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - scenarios
+              properties:
+                scenarios:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - type
+                      - persona_id
+                      - org_id
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the scenario
+                      description:
+                        type: string
+                        description: Description of the scenario
+                      prompt:
+                        type: string
+                        description: Prompt for the scenario
+                      user_prompt:
+                        type: string
+                        description: Original user prompt entered on Create page
+                      type:
+                        type: string
+                        enum:
+                          - interview
+                          - roleplay
+                          - upskill
+                          - brainstorm
+                        description: Type of the scenario
+                      persona_id:
+                        type: string
+                        description: ID of the associated persona
+                      org_id:
+                        type: string
+                        description: Organization ID
+                      goals:
+                        type: array
+                        items:
+                          type: string
+                        description: Array of goal IDs to associate with the scenario
+      responses:
+        '201':
+          description: Scenarios created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Scenario'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/{scenarioId}/session-options:
+    get:
+      summary: Get session options for a scenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session options for the scenario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect_url:
+                    type: string
+                  webhook_url:
+                    type: string
+                  type:
+                    type: string
+                    enum:
+                      - public
+                      - private
+                  duration:
+                    type: integer
+        '404':
+          description: Session options not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update session options for a scenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - duration
+              properties:
+                redirect_url:
+                  type: string
+                webhook_url:
+                  type: string
+                type:
+                  type: string
+                  enum:
+                    - public
+                    - private
+                duration:
+                  type: integer
+                  description: Duration in minutes
+      responses:
+        '200':
+          description: Session options updated successfully
+        '400':
+          description: Invalid input data
+        '404':
+          description: Scenario not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete session options for a scenario
+      tags:
+        - Scenarios
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session options deleted successfully
+        '404':
+          description: Session options not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /scenarios/membership/{membershipId}/meetings:
+    get:
+      summary: Get all meetings for all scenarios of a user
+      tags:
+        - Scenarios
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of all meetings for all scenarios of the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        daily_id:
+                          type: string
+                        status:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                        scenario:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            persona:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                job_title:
+                                  type: string
+                                avatar:
+                                  type: string
+                        Recordings:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Recording'
+                        Transcripts:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Transcript'
+                        Analysis:
+                          $ref: '#/components/schemas/Analysis'
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /transcripts:
+    get:
+      summary: Get all transcripts
+      tags:
+        - Transcripts
+      responses:
+        '200':
+          description: A list of transcripts
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new transcript
+      tags:
+        - Transcripts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - meeting_id
+              properties:
+                meeting_id:
+                  type: string
+                content:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - processing
+                    - completed
+                    - failed
+                language:
+                  type: string
+                chunks:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - text
+                      - start_time
+                      - end_time
+                    properties:
+                      speaker:
+                        type: string
+                      text:
+                        type: string
+                      start_time:
+                        type: number
+                      end_time:
+                        type: number
+                      confidence:
+                        type: number
+      responses:
+        '201':
+          description: Transcript created successfully
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /transcripts/{id}:
+    get:
+      summary: Get a transcript by ID
+      tags:
+        - Transcripts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transcript details
+        '404':
+          description: Transcript not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update a transcript
+      tags:
+        - Transcripts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - processing
+                    - completed
+                    - failed
+                language:
+                  type: string
+                chunks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      speaker:
+                        type: string
+                      text:
+                        type: string
+                      start_time:
+                        type: number
+                      end_time:
+                        type: number
+                      confidence:
+                        type: number
+      responses:
+        '200':
+          description: Transcript updated successfully
+        '404':
+          description: Transcript not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a transcript
+      tags:
+        - Transcripts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Transcript deleted successfully
+        '404':
+          description: Transcript not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /transcripts/meeting/{meetingId}:
+    get:
+      summary: Get transcripts by meeting ID
+      tags:
+        - Transcripts
+      parameters:
+        - name: meetingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of transcripts for the meeting
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /transcripts/{transcriptId}/chunks:
+    post:
+      summary: Add a chunk to a transcript
+      tags:
+        - Transcripts
+      parameters:
+        - name: transcriptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - start_time
+                - end_time
+              properties:
+                speaker:
+                  type: string
+                text:
+                  type: string
+                start_time:
+                  type: number
+                end_time:
+                  type: number
+                confidence:
+                  type: number
+      responses:
+        '201':
+          description: Chunk added successfully
+        '404':
+          description: Transcript not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /users:
+    get:
+      summary: Get all users
+      tags:
+        - Users
+      responses:
+        '200':
+          description: A list of users
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    post:
+      summary: Create a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                city:
+                  type: string
+                country:
+                  type: string
+                summary:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /users/{userId}:
+    get:
+      summary: Get a user by ID
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    put:
+      summary: Update a user
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                city:
+                  type: string
+                country:
+                  type: string
+                summary:
+                  type: string
+      responses:
+        '200':
+          description: User updated successfully
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+    delete:
+      summary: Delete a user
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /users/username/{username}:
+    get:
+      summary: Get a user by username (public profile)
+      tags:
+        - Users
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+      security:
+        - apiKeyAuth: []
+  /voices/membership/{membershipId}:
+    get:
+      summary: Get all voices for a membership
+      description: Retrieve a list of all available voices for a specific membership
+      tags:
+        - Voices
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: membershipId
+          required: true
+          schema:
+            type: string
+          description: Membership ID
+      responses:
+        '200':
+          description: List of voices retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Voice'
+        '500':
+          description: Server error
+  /voices/{id}:
+    get:
+      summary: Get a voice by ID
+      description: Retrieve a specific voice by its ID
+      tags:
+        - Voices
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Voice ID
+      responses:
+        '200':
+          description: Voice retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Voice'
+        '404':
+          description: Voice not found
+        '500':
+          description: Server error
+    put:
+      summary: Update a voice
+      description: Update an existing voice's details
+      tags:
+        - Voices
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Voice ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - provider
+              properties:
+                name:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '200':
+          description: Voice updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Voice'
+        '400':
+          description: Invalid input
+        '404':
+          description: Voice not found
+        '500':
+          description: Server error
+    delete:
+      summary: Delete a voice
+      description: Delete a voice by its ID
+      tags:
+        - Voices
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Voice ID
+      responses:
+        '200':
+          description: Voice deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: Voice not found
+        '500':
+          description: Server error
+  /voices:
+    post:
+      summary: Create a new voice
+      description: Create a new voice with the provided details
+      tags:
+        - Voices
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - partner_voice_id
+                - name
+                - provider
+                - user_basic_info_id
+              properties:
+                partner_voice_id:
+                  type: string
+                name:
+                  type: string
+                provider:
+                  type: string
+                user_basic_info_id:
+                  type: string
+      responses:
+        '201':
+          description: Voice created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Voice'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error

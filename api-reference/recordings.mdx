@@ -1,6 +1,7 @@
 ---
-title: 'Recordings API'
+title: 'Recordings'
 description: 'Access meeting recordings'
+openapi: 'GET /recordings/meeting/{meetingId}'
 ---
 
 ## Overview
@@ -19,20 +20,16 @@ Recordings capture the audio/video of meetings for later playback and review.
 
 Retrieve all recordings for the authenticated user.
 
-<ParamField body="none" path="none" query="none">
-
-</ParamField>
-
 ```bash
-curl -X GET https://api.waterrai.com/recordings \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/recordings \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 [
   {
-    "id": 201,
-    "meeting_id": 789,
+    "id": "recording-uuid",
+    "meeting_id": "meeting-uuid",
     "url": "https://storage.example.com/recordings/abc123.mp4",
     "duration": 1800,
     "status": "completed",
@@ -43,55 +40,59 @@ curl -X GET https://api.waterrai.com/recordings \
 
 ## Get Recording by ID
 
-Retrieve a specific recording by its ID.
-
-<ParamField body="none" path="id" type="integer" required>
-  The recording ID
+<ParamField path="id" type="string" required>
+  The recording UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/recordings/201 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
-```
-
-```200:json
-{
-  "id": 201,
-  "meeting_id": 789,
-  "url": "https://storage.example.com/recordings/abc123.mp4",
-  "duration": 1800,
-  "status": "completed",
-  "created_at": "2024-01-15T11:10:00Z",
-  "Transcript": {
-    "id": 301,
-    "meeting_id": 789
-  }
-}
+curl -X GET https://waterr.ai/backend/recordings/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ## Get Recordings by Meeting ID
 
-Retrieve all recordings for a specific meeting.
-
-<ParamField body="none" path="meetingId" type="integer" required>
-  The meeting ID
+<ParamField path="meetingId" type="string" required>
+  The meeting UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/recordings/meeting/789 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/recordings/meeting/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
-[
-  {
-    "id": 201,
-    "meeting_id": 789,
-    "url": "https://storage.example.com/recordings/abc123.mp4",
-    "duration": 1800,
-    "status": "completed"
-  }
-]
+## Get Recording URL
+
+Get the playback URL (CloudFront CDN) for a recording. This is the recommended endpoint for embedding or linking to recordings.
+
+<ParamField path="meetingId" type="string" required>
+  The Daily meeting ID (returned as `daily_meeting_id` when creating a meeting)
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/recordings/url/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Get Recording URL with Thumbnail
+
+Same as above but also returns a thumbnail image URL for preview.
+
+```bash
+curl -X GET https://waterr.ai/backend/recordings/url-with-thumbnail/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Get Recordings by Scenario
+
+Retrieve all recordings across meetings for a specific scenario.
+
+<ParamField path="scenarioId" type="string" required>
+  The scenario UUID
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/recordings/scenario/{scenarioId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 <Tip>

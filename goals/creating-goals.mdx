@@ -1,0 +1,76 @@
+---
+title: Creating Goals
+description: "Define what gets measured in your scenario sessions."
+---
+
+# Creating Goals
+
+## Add a Goal
+
+<Steps>
+  <Step title="Open the Goals tab">
+    Navigate to your scenario and click the **Goals** tab.
+  </Step>
+  <Step title="Click Add Goal">
+    Click the **Add Goal** button to open the goal creation form.
+  </Step>
+  <Step title="Fill in the details">
+    - **Name**: A short label (e.g., "Active Listening")
+    - **Description**: One sentence of context
+    - **Scoring Instructions**: Detailed criteria for the AI evaluator
+  </Step>
+  <Step title="Save">
+    Click Save. The goal applies to all future sessions for this scenario.
+  </Step>
+</Steps>
+
+## Writing Scoring Instructions
+
+Scoring instructions tell the AI evaluator exactly what to look for. The quality of your scoring instructions directly determines the quality of evaluation.
+
+### Good vs. Bad Instructions
+
+<Tabs>
+  <Tab title="Good">
+    ```text
+    Evaluate whether the participant:
+    1. Acknowledged the customer's frustration before offering solutions
+    2. Asked at least one clarifying question to understand the root cause
+    3. Provided a specific, actionable resolution (not generic platitudes)
+    4. Confirmed the customer's satisfaction before ending
+    
+    Score 90-100 if all four are met.
+    Score 70-89 if three are met.
+    Score 50-69 if two are met.
+    Score below 50 if fewer than two are met.
+    ```
+  </Tab>
+  <Tab title="Bad">
+    ```text
+    Did they handle the customer well?
+    ```
+  </Tab>
+</Tabs>
+
+## Tips
+
+- **Be specific about what "good" looks like.** Use observable behaviors, not subjective judgments.
+- **Include a scoring rubric.** Define what each score range means.
+- **Test with Playground.** Run a session and check if the scores make sense for your criteria.
+- **Use 3-5 goals per scenario.** Too many goals dilute focus. Too few miss important dimensions.
+
+## Example Goals by Scenario Type
+
+### Interview Scenario
+| Goal | Scoring Focus |
+|------|---------------|
+| Technical Depth | Did they explain concepts clearly with concrete examples? |
+| Problem Solving | Did they break down the problem, consider trade-offs, and arrive at a reasonable solution? |
+| Communication | Were answers structured, concise, and easy to follow? |
+
+### Sales Scenario
+| Goal | Scoring Focus |
+|------|---------------|
+| Discovery Quality | Did they ask open-ended questions that uncovered real pain points? |
+| Objection Handling | Did they acknowledge concerns and provide evidence-based responses? |
+| Next Steps | Did they propose a clear, specific next action? |

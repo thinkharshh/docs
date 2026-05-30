@@ -1,0 +1,152 @@
+---
+title: 'Authentication'
+description: 'Create and manage API keys to authenticate with the WaterrAI API'
+---
+
+## Get your API key
+
+The fastest way to get an API key is from the WaterrAI dashboard.
+
+<Steps>
+  <Step title="Sign in">
+    Go to [waterr.ai](https://waterr.ai) and sign in with Google, Microsoft, or LinkedIn.
+  </Step>
+  <Step title="Open API Keys">
+    Click your profile, open **Settings**, then choose **API Keys** from the sidebar — or go directly to [waterr.ai/settings?tab=api-keys](https://waterr.ai/settings?tab=api-keys).
+  </Step>
+  <Step title="Create a key">
+    Click **Create API Key**, give it a recognizable name (e.g. `Production`, `CI/CD`), and copy the key when it's shown. You'll only see the full key once — store it somewhere safe.
+  </Step>
+</Steps>
+
+<Note>
+  **Security:** Keys are hashed with bcrypt and never stored in plain text. The plain key is only shown once during creation — if you lose it, create a new one.
+</Note>
+
+## Using your API key
+
+Send the key in the `Authorization` header on any API request:
+
+```bash
+curl -X GET https://waterr.ai/backend/personas \
+  -H "Authorization: Bearer wai_abc123def456..."
+```
+
+### Key format
+
+- **Prefix:** `wai_` (WaterrAI identifier)
+- **Length:** 68 characters (4 char prefix + 64 hex characters)
+- **Format:** `wai_[64 hex characters]`
+
+## Managing keys
+
+You can revoke, reactivate, or delete keys at any time from [Settings → API Keys](https://waterr.ai/settings?tab=api-keys).
+
+- **Revoke** — disables the key. Existing requests using it will start failing. Reversible.
+- **Reactivate** — re-enables a revoked key. The same secret resumes working.
+- **Delete** — permanently removes the key. Cannot be undone — use revoke instead if you might want it back.
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Store securely" icon="lock">
+    Keep keys in environment variables or a secret manager. Never commit them to version control or share them in chat.
+  </Card>
+  <Card title="One key per use" icon="tag">
+    Create separate keys for each environment or service (e.g. `Production`, `Staging`, `GitHub Actions`) so you can revoke one without breaking the rest.
+  </Card>
+  <Card title="Rotate regularly" icon="rotate">
+    Periodically create a new key, switch your services over, and revoke the old one — especially if a key may have been exposed.
+  </Card>
+  <Card title="Revoke, don't delete" icon="ban">
+    Prefer revoking keys you don't need. You can reactivate a revoked key; you can't recover a deleted one.
+  </Card>
+</CardGroup>
+
+---
+
+## REST API reference
+
+The same operations are available over REST if you're automating key management (for example, provisioning keys from CI). All `/api-secrets` endpoints require a logged-in user JWT.
+
+### Create API key
+
+<ParamField body="name" type="string" required>
+  A recognizable name for the key (e.g. "Production API Key", "CI/CD Pipeline").
+</ParamField>
+
+```bash
+curl -X POST https://waterr.ai/backend/api-secrets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Production API Key" }'
+```
+
+```json
+{
+  "status": "success",
+  "message": "API secret created successfully",
+  "data": {
+    "id": 1,
+    "name": "Production API Key",
+    "secret": "wai_abc123def456789012345678901234567890123456789012345678901234567890",
+    "secret_prefix": "wai_abc123de",
+    "created_at": "2024-01-19T19:37:07.000Z",
+    "warning": "Save this secret now. You won't be able to see it again!"
+  }
+}
+```
+
+<Warning>
+  The plain `secret` is only returned once. If you lose it, create a new key.
+</Warning>
+
+### List API keys
+
+Returns metadata for every key on your account. The plain secret is never returned — only the prefix.
+
+```bash
+curl -X GET https://waterr.ai/backend/api-secrets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Production API Key",
+      "secret_prefix": "wai_abc123de",
+      "last_used_at": "2024-01-19T20:00:00.000Z",
+      "is_active": true,
+      "created_at": "2024-01-19T19:37:07.000Z"
+    }
+  ]
+}
+```
+
+### Revoke API key
+
+Disable a key. Revoked keys can be reactivated later.
+
+```bash
+curl -X POST https://waterr.ai/backend/api-secrets/1/revoke \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Reactivate API key
+
+```bash
+curl -X POST https://waterr.ai/backend/api-secrets/1/reactivate \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Delete API key
+
+Permanent — cannot be undone.
+
+```bash
+curl -X DELETE https://waterr.ai/backend/api-secrets/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```

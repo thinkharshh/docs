@@ -1,0 +1,201 @@
+---
+title: 'Examples'
+description: 'Complete integration examples for common use cases.'
+---
+
+## Overview
+
+These examples show complete integrations from API setup to result retrieval. Copy and adapt them for your use case.
+
+## Example 1: Embed Interview Practice on Your Website
+
+Build a page where candidates practice interviews and you get scored results.
+
+### Setup
+
+```javascript
+// server.js (Node.js/Express)
+const express = require('express');
+const app = express();
+const API = 'https://waterr.ai/backend';
+const TOKEN = process.env.WATERR_API_TOKEN;
+
+const headers = {
+  'Authorization': `Bearer ${TOKEN}`,
+  'Content-Type': 'application/json',
+};
+
+// Create a meeting when a candidate clicks "Start Practice"
+app.post('/api/start-session', async (req, res) => {
+  const { candidateName, scenarioId } = req.body;
+
+  const meeting = await fetch(`${API}/meetings`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      person_name: candidateName,
+      scenario_id: scenarioId,
+      meeting_type: 'regular',
+    }),
+  }).then(r => r.json());
+
+  res.json({
+    meetingId: meeting.data.id,
+    roomUrl: meeting.data.daily_meeting_url,
+    token: meeting.data.room_token,
+  });
+});
+
+// Fetch results after the session
+app.get('/api/results/:meetingId', async (req, res) => {
+  const analysis = await fetch(
+    `${API}/analyses/meeting/${req.params.meetingId}`,
+    { headers }
+  ).then(r => r.json());
+
+  res.json(analysis);
+});
+```
+
+### Frontend
+
+```html
+<!-- Embed the meeting room -->
+<iframe
+  id="meeting-frame"
+  allow="camera; microphone; autoplay; display-capture"
+  style="width: 100%; height: 600px; border: none; border-radius: 12px;"
+></iframe>
+
+<script>
+async function startSession() {
+  const res = await fetch('/api/start-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      candidateName: 'Jane Smith',
+      scenarioId: 'your-scenario-uuid',
+    }),
+  });
+  const { roomUrl, token } = await res.json();
+  document.getElementById('meeting-frame').src = `${roomUrl}?t=${token}`;
+}
+</script>
+```
+
+---
+
+## Example 2: Batch Assessment Pipeline
+
+Run assessments for multiple candidates and collect results in a spreadsheet.
+
+```python
+import os
+import time
+import csv
+import requests
+
+API = "https://waterr.ai/backend"
+TOKEN = os.environ["WATERR_API_TOKEN"]
+headers = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+
+SCENARIO_ID = "your-scenario-uuid"
+
+candidates = [
+    {"name": "Alice Johnson", "email": "alice@example.com"},
+    {"name": "Bob Chen", "email": "bob@example.com"},
+    {"name": "Carol Davis", "email": "carol@example.com"},
+]
+
+# Step 1: Create meetings for each candidate
+meetings = []
+for candidate in candidates:
+    res = requests.post(f"{API}/meetings", headers=headers, json={
+        "person_name": candidate["name"],
+        "scenario_id": SCENARIO_ID,
+    })
+    meeting = res.json()["data"]
+    meetings.append({
+        **candidate,
+        "meeting_id": meeting["id"],
+        "join_url": meeting["daily_meeting_url"],
+    })
+    print(f"Created session for {candidate['name']}: {meeting['daily_meeting_url']}")
+
+# Step 2: Send join links to candidates (via your email system)
+# ... send meetings[i]["join_url"] to each candidate ...
+
+# Step 3: After sessions complete, collect results
+time.sleep(60)  # Wait for analysis to generate
+
+results = []
+for m in meetings:
+    res = requests.get(f"{API}/analyses/meeting/{m['meeting_id']}", headers=headers)
+    if res.ok:
+        analysis = res.json()
+        results.append({
+            "name": m["name"],
+            "email": m["email"],
+            "score": analysis.get("average_score", "N/A"),
+            "strengths": "; ".join(analysis.get("strengths", [])),
+            "growth_areas": "; ".join(analysis.get("growth_areas", [])),
+        })
+
+# Step 4: Export to CSV
+with open("assessment_results.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=["name", "email", "score", "strengths", "growth_areas"])
+    writer.writeheader()
+    writer.writerows(results)
+
+print(f"Exported {len(results)} results to assessment_results.csv")
+```
+
+---
+
+## Example 3: Webhook-Driven Analytics Dashboard
+
+Receive results in real-time via webhook and store them in your database.
+
+### Webhook receiver (Express)
+
+```javascript
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+// Receive webhook when a session completes
+app.post('/webhooks/waterr', async (req, res) => {
+  const { event, data } = req.body;
+
+  if (event === 'meeting.completed') {
+    // Store in your database
+    await db.sessionResults.create({
+      meetingId: data.meeting_id,
+      scenarioId: data.scenario_id,
+      participantName: data.person_name,
+      score: data.goals?.reduce((sum, g) => sum + g.score, 0) / data.goals?.length,
+      goals: data.goals,
+      completedAt: data.completed_at,
+    });
+
+    // Notify your team
+    await slack.send(`Session completed: ${data.person_name} scored ${avgScore}/10`);
+  }
+
+  res.sendStatus(200); // Always respond 200 to acknowledge receipt
+});
+```
+
+### Register the webhook
+
+```bash
+curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhook_url": "https://your-app.com/webhooks/waterr"
+  }'
+```
+
+<Warning>
+  Always respond with a `2xx` status to webhook requests, even if you encounter an error processing the data. Non-2xx responses trigger retries, which can lead to duplicate processing.
+</Warning>

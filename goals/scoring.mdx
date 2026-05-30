@@ -1,0 +1,48 @@
+---
+title: Scoring
+description: "How the AI evaluates and scores participants."
+---
+
+# Scoring
+
+After each session ends, the AI evaluator reviews the full transcript and scores the participant against each goal.
+
+## Scoring Process
+
+1. The session transcript is passed to the AI evaluator
+2. For each goal, the evaluator applies the scoring instructions
+3. It produces a numerical score (percentage) and written feedback
+4. An overall average score is calculated across all goals
+
+## Score Ranges
+
+| Range | Label | Meaning |
+|-------|-------|---------|
+| 90-100% | Excellent | Exceeded expectations on all criteria |
+| 80-89% | Good | Met most criteria with minor gaps |
+| 70-79% | Average | Partially met criteria, room for improvement |
+| 60-69% | Fair | Significant gaps in performance |
+| Below 60% | Poor | Did not meet minimum criteria |
+
+## What Gets Evaluated
+
+The AI evaluator has access to:
+- The complete session transcript (everything said by both parties)
+- The goal's name, description, and scoring instructions
+- The scenario context (persona, instructions)
+
+It does **not** have access to:
+- Video/visual information
+- Tone of voice or pacing (text-based evaluation only)
+- Previous sessions by the same participant
+
+## Improving Score Accuracy
+
+<Tip>
+If scores don't match your expectations, the issue is almost always in the scoring instructions. Make them more specific.
+</Tip>
+
+- **Add concrete examples** of what high/low performance looks like
+- **Define score ranges explicitly** (what earns a 90 vs. a 70?)
+- **Use observable behaviors** rather than subjective qualities
+- **Test with Playground** and verify scores make sense

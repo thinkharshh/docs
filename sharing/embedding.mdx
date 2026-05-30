@@ -1,0 +1,77 @@
+---
+title: Embedding
+description: "Embed scenarios directly into your website or app."
+---
+
+# Embedding
+
+Embed a scenario into any webpage so participants can start sessions without leaving your site.
+
+## Embed Formats
+
+<CardGroup cols={2}>
+  <Card title="Avatar Assist" icon="robot">
+    A floating avatar widget (176x265px) that appears in the corner of your page. Participants click to start a conversation. Great for support bots and onboarding.
+  </Card>
+  <Card title="Inline" icon="rectangle-wide">
+    Full meeting UI embedded in your page content. Customizable dimensions (default 800x600px). Great for training portals and LMS platforms.
+  </Card>
+</CardGroup>
+
+## How to Embed
+
+<Steps>
+  <Step title="Open Share modal">
+    Click **Share** on your scenario, then go to the **"Embed"** tab.
+  </Step>
+  <Step title="Choose a format">
+    Select Avatar Assist or Inline from the card grid.
+  </Step>
+  <Step title="Configure (Inline only)">
+    For Inline embeds, customize:
+    - **Width**: 300-2000px (default 800px)
+    - **Height**: 400-1200px (default 600px)
+    - **Fullscreen**: Allow participants to go fullscreen
+    - **Responsive**: Scale to container width
+  </Step>
+  <Step title="Copy the code">
+    Click **"Copy Embed Code"** to copy the iframe HTML. Paste it into your website.
+  </Step>
+</Steps>
+
+## Embed Code
+
+The generated embed code looks like this:
+
+```html
+<iframe 
+  src="https://meet.waterr.ai/embed/inline/{scenario-id}" 
+  width="800px" 
+  height="600px" 
+  frameborder="0"
+  allow="camera; microphone; autoplay; display-capture; fullscreen"
+  style="max-width: 100%;">
+</iframe>
+```
+
+## Requirements
+
+<Warning>
+Embeds require camera and microphone permissions. Your website must be served over **HTTPS** for these browser permissions to work.
+</Warning>
+
+The `allow` attribute grants the iframe access to:
+- `camera` -- participant video
+- `microphone` -- participant audio (required)
+- `autoplay` -- audio playback
+- `display-capture` -- screen sharing (if enabled)
+- `fullscreen` -- fullscreen mode (if enabled)
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Microphone not working | Ensure your site uses HTTPS |
+| Embed not loading | Check that the scenario is set to public visibility |
+| Iframe too small | Increase width/height or enable responsive mode |
+| Cross-origin errors | The embed domain must be allowed -- contact support if blocked |

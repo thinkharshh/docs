@@ -1,0 +1,76 @@
+---
+title: Core Concepts
+description: "Understand the building blocks of Waterr AI: scenarios, personas, goals, and sessions."
+---
+
+# Core Concepts
+
+Every conversation in Waterr is built from a few key pieces. Understanding these will help you create better scenarios.
+
+## Scenario
+
+A **scenario** is the complete package -- it defines the entire conversation experience. Think of it as a blueprint that combines who the AI is, how it behaves, and what it measures.
+
+A scenario contains:
+- A **Persona** (the AI character)
+- **Instructions** (the system prompt)
+- **Goals** (evaluation criteria)
+- **Settings** (duration, recording, controls)
+
+## Persona
+
+The **persona** is the AI character your participants interact with. It defines:
+
+| Property | Description |
+|----------|-------------|
+| Name | The character's name shown to participants |
+| Job Title | Their role (e.g., "VP of Engineering", "Enterprise Buyer") |
+| Demeanor | Communication style -- friendly, professional, or challenging |
+| Industry | Domain context for realistic conversations |
+| Background | Backstory that informs their responses |
+| Avatar | Visual representation shown in the meeting UI |
+
+<Info>
+Participants see the persona's name and avatar during the session. They don't see instructions or goals.
+</Info>
+
+## Instructions
+
+The **instructions** are the system prompt that drives the AI's behavior. This is where you define:
+
+- How the persona should open the conversation
+- What topics to cover or avoid
+- How to respond to specific situations
+- When to push back, ask follow-ups, or move on
+- The conversation's structure and flow
+
+## Goals
+
+**Goals** are evaluation criteria that the AI uses to score participants after a session. Each goal has:
+
+- **Name** -- what you're measuring (e.g., "Objection Handling")
+- **Description** -- context about the goal
+- **Scoring Instructions** -- detailed criteria for the AI evaluator
+
+After a session ends, the AI reviews the transcript and produces a score and feedback for each goal.
+
+## Session
+
+A **session** is a single conversation instance. When a participant joins via a link, they start a session. Each session produces:
+
+- A real-time AI conversation (voice + optional video)
+- A recording and transcript
+- Goal scores and feedback (after the session ends)
+- Analytics (duration, filler words, speech patterns)
+
+## Session Options
+
+Settings that control how a session behaves:
+
+| Setting | Description |
+|---------|-------------|
+| Duration | Maximum session length (default: 35 minutes) |
+| Recording | Whether the session is recorded |
+| Consent | Whether to show a consent prompt before starting |
+| Webhook URL | POST results to your system when a session completes |
+| Meeting Controls | Camera, microphone, and screen share toggles |

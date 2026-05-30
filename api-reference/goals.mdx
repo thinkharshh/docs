@@ -1,0 +1,188 @@
+---
+title: 'Goals'
+description: 'Create and manage evaluation goals for scoring participants.'
+openapi: 'POST /goals'
+---
+
+## Overview
+
+Goals define the criteria the AI uses to evaluate participants after each session. Each goal has a name, description, and scoring instructions. Goals are invisible to participants during the session.
+
+## Get All Goals
+
+Retrieve all goals for the authenticated user.
+
+```bash
+curl -X GET https://waterr.ai/backend/goals \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+```json
+[
+  {
+    "id": "a1b2c3d4-...",
+    "name": "Communication Clarity",
+    "description": "How clearly the participant articulates their ideas",
+    "instructions": "Score 1-10 based on structure, conciseness, and use of examples",
+    "metrics": null,
+    "scenario_id": "scenario-uuid",
+    "active": true,
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+## Get Goal by ID
+
+<ParamField path="id" type="string" required>
+  The goal UUID
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/goals/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Create Goal
+
+<ParamField body="name" type="string" required>
+  Name of the goal (e.g., "Problem Solving", "Empathy")
+</ParamField>
+
+<ParamField body="description" type="string">
+  What this goal measures -- visible to you in the dashboard
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  Scoring instructions for the AI -- how to evaluate and what score range to use
+</ParamField>
+
+<ParamField body="metrics" type="object">
+  Custom evaluation metrics as JSON (optional)
+</ParamField>
+
+<ParamField body="scenario_id" type="string">
+  Link this goal directly to a scenario (optional — you can also link via the scenario's `goals` array)
+</ParamField>
+
+<ParamField body="active" type="boolean">
+  Whether this goal is active. Default: `true`
+</ParamField>
+
+<Note>
+  `membership_id` is automatically set from your auth token — you don't need to pass it.
+</Note>
+
+```bash
+curl -X POST https://waterr.ai/backend/goals \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Technical Depth",
+    "description": "Evaluates depth and accuracy of technical explanations",
+    "instructions": "Score 1-10. Look for: specific technologies mentioned, trade-off analysis, real-world experience signals. Deduct points for vague or surface-level answers."
+  }'
+```
+
+```json
+{
+  "id": "a1b2c3d4-...",
+  "name": "Technical Depth",
+  "description": "Evaluates depth and accuracy of technical explanations",
+  "instructions": "Score 1-10...",
+  "metrics": null,
+  "active": true,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+## Bulk Create Goals
+
+Create multiple goals at once:
+
+```bash
+curl -X POST https://waterr.ai/backend/goals/bulk \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "goals": [
+      {
+        "name": "Communication",
+        "description": "Clarity and structure of responses",
+        "instructions": "Score 1-10 based on articulation..."
+      },
+      {
+        "name": "Problem Solving",
+        "description": "Approach to breaking down problems",
+        "instructions": "Score 1-10 based on methodology..."
+      }
+    ]
+  }'
+```
+
+## Update Goal
+
+<ParamField path="id" type="string" required>
+  The goal UUID
+</ParamField>
+
+```bash
+curl -X PUT https://waterr.ai/backend/goals/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Goal Name",
+    "instructions": "Updated scoring criteria..."
+  }'
+```
+
+## Delete Goal
+
+<ParamField path="id" type="string" required>
+  The goal UUID
+</ParamField>
+
+```bash
+curl -X DELETE https://waterr.ai/backend/goals/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Linking Goals to Scenarios
+
+Goals are linked to scenarios during scenario creation or update. Pass an array of goal IDs:
+
+```bash
+curl -X POST https://waterr.ai/backend/scenarios \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sales Discovery Call",
+    "type": "roleplay",
+    "persona_id": "...",
+    "prompt": "...",
+    "goals": ["goal-uuid-1", "goal-uuid-2", "goal-uuid-3"]
+  }'
+```
+
+<Tip>
+  Write scoring instructions that are specific and behavioral. "Good communication" is vague. "Responds in structured format: states the approach, walks through reasoning, then summarizes" gives the AI clear criteria.
+</Tip>
+
+## Goal Scoring Tips
+
+<CardGroup cols={2}>
+  <Card title="Use a consistent scale" icon="ruler">
+    Pick a scale (1-10 recommended) and define what each end means. The AI needs anchors.
+  </Card>
+  <Card title="Be behavioral, not subjective" icon="list-check">
+    "Did they ask clarifying questions before answering?" is scorable. "Were they smart?" is not.
+  </Card>
+  <Card title="3-5 goals per scenario" icon="bullseye">
+    Too many goals dilute focus. Pick the 3-5 things that actually matter for this conversation.
+  </Card>
+  <Card title="Include negative signals" icon="triangle-exclamation">
+    Tell the AI what to deduct for: "Deduct 2 points if they skip the discovery phase entirely."
+  </Card>
+</CardGroup>

@@ -1,0 +1,97 @@
+---
+title: Post-Meeting Evaluations
+description: "Set up goals and scoring to automatically evaluate participants after each session."
+---
+
+# Post-Meeting Evaluations
+
+After each session, the AI evaluates the participant against the goals you define. This produces scores, written feedback, and analytics you can review and export.
+
+## Goals
+
+Goals are the evaluation criteria for your scenario. Each goal defines what to measure and how to score it.
+
+### Creating goals
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to configure.
+  </Step>
+  <Step title="Go to the Goals tab">
+    Click the **Goals** tab on the scenario detail page.
+  </Step>
+  <Step title="Add a goal">
+    Click **Add Goal**. Fill in:
+    - **Name** -- What you're measuring (e.g., "Communication Clarity")
+    - **Description** -- What good performance looks like
+    - **Scoring instructions** -- How the AI should assign a score
+  </Step>
+</Steps>
+
+### Example goals
+
+<Tabs>
+  <Tab title="Interview">
+    | Goal | Description |
+    |------|-------------|
+    | Technical Depth | Evaluates the depth and accuracy of technical explanations |
+    | Problem Solving | Assesses approach to breaking down and solving the given problem |
+    | Communication | Clarity, structure, and conciseness of responses |
+  </Tab>
+  <Tab title="Sales">
+    | Goal | Description |
+    |------|-------------|
+    | Discovery Quality | Did they ask open-ended questions to uncover needs? |
+    | Objection Handling | How effectively did they address concerns? |
+    | Closing Technique | Did they propose a clear next step? |
+  </Tab>
+  <Tab title="Support">
+    | Goal | Description |
+    |------|-------------|
+    | Empathy | Did they acknowledge the customer's frustration? |
+    | Resolution | Did they resolve or escalate the issue correctly? |
+    | Professionalism | Maintained composure under pressure |
+  </Tab>
+</Tabs>
+
+## Scoring
+
+Each goal is scored on a scale (typically 1-10). The AI assigns scores based on:
+
+- The conversation transcript
+- Your scoring instructions
+- Observable behavior during the session
+
+### Score breakdown
+
+After a session, you can view:
+
+- **Individual goal scores** with written feedback
+- **Overall score** (average across all goals)
+- **Transcript highlights** linked to specific goal evaluations
+
+## Viewing results
+
+<Steps>
+  <Step title="Go to the scenario">
+    Open the scenario from your dashboard.
+  </Step>
+  <Step title="Click on a session">
+    In the session list, click on a completed session.
+  </Step>
+  <Step title="Review evaluations">
+    The evaluation tab shows scores, feedback, and transcript for each goal.
+  </Step>
+</Steps>
+
+## Exporting results
+
+Export session results for reporting or integration with your systems:
+
+- **CSV export** -- Download scores and feedback as a spreadsheet
+- **Webhook** -- Receive results automatically via [webhook notifications](/capabilities/notifications)
+- **API** -- Query results programmatically via the [API](/api-reference/meetings)
+
+<Tip>
+Write scoring instructions that are specific and behavioral. "Good communication" is vague. "Responds in structured format: states the approach, walks through the solution, then summarizes" gives the AI clear criteria to score against.
+</Tip>

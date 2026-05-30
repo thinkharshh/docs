@@ -1,0 +1,68 @@
+---
+title: Webhooks
+description: "Configure webhook URLs to receive session results (coming soon)."
+---
+
+# Webhooks
+
+<Warning>
+  **Coming soon.** You can configure a webhook URL today, but outgoing webhook delivery is not yet active. Use [polling](/api-reference/session-lifecycle) or [email notifications](/capabilities/notifications) to get session results in the meantime.
+</Warning>
+
+## Setup
+
+Configure a webhook URL for your scenario via the **Settings** tab or the session options API:
+
+```bash
+curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhook_url": "https://your-app.com/webhooks/waterr"
+  }'
+```
+
+The `webhook_url` field is stored on the scenario's session options. When webhook delivery is enabled, we will POST to this URL when sessions complete.
+
+## Planned Payload
+
+When implemented, the webhook will POST the following payload on session completion:
+
+```json
+{
+  "event": "meeting.completed",
+  "data": {
+    "meeting_id": "meeting-uuid",
+    "scenario_id": "scenario-uuid",
+    "person_name": "John Smith",
+    "duration": 1420,
+    "goals": [
+      {
+        "name": "Problem Solving",
+        "score": 90,
+        "feedback": "Demonstrated clear structured thinking..."
+      }
+    ],
+    "completed_at": "2024-01-20T09:25:00Z"
+  }
+}
+```
+
+## Planned Events
+
+| Event | When |
+|-------|------|
+| `meeting.completed` | Session ends and analysis is ready |
+
+## Current Alternatives
+
+Until webhooks are active, use these approaches to get session results:
+
+<CardGroup cols={2}>
+  <Card title="Poll for analysis" icon="rotate" href="/api-reference/session-lifecycle">
+    Check `GET /analyses/meeting/{meetingId}` every 5-10 seconds after a meeting ends.
+  </Card>
+  <Card title="Email notifications" icon="envelope" href="/capabilities/notifications">
+    Add email addresses in scenario settings to receive results automatically.
+  </Card>
+</CardGroup>

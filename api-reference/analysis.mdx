@@ -1,41 +1,32 @@
 ---
-title: 'Analysis API'
+title: 'Analysis'
 description: 'Get analysis results for meetings and scenarios'
+openapi: 'GET /analyses/meeting/{meetingId}'
 ---
 
 ## Overview
 
 Analysis provides detailed insights about a meeting, including performance metrics, strengths, growth areas, and goal-based evaluations.
 
-<Card
-  title="Need to create a meeting first?"
-  icon="video"
-  href="/api-reference/meetings"
->
-  Create a meeting from a scenario, then fetch analysis once it’s generated.
-</Card>
-
 <Note>
-  **Analysis Timing:** Analysis is generated after a meeting ends. If you don’t see analysis immediately, wait a bit and retry.
+  **Analysis Timing:** Analysis is generated after a meeting ends. If you don't see analysis immediately, wait a bit and retry.
 </Note>
 
 ## Get Analysis by Meeting ID
 
-Retrieve the analysis for a specific meeting.
-
-<ParamField body="none" path="meetingId" type="integer" required>
-  The meeting ID to get analysis for
+<ParamField path="meetingId" type="string" required>
+  The meeting UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/analyses/meeting/789 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/analyses/meeting/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 {
-  "id": 101,
-  "meeting_id": 789,
+  "id": "analysis-uuid",
+  "meeting_id": "meeting-uuid",
   "title": "Product Manager Interview Analysis",
   "average_score": 85,
   "total_score": 340,
@@ -67,82 +58,107 @@ curl -X GET https://api.waterrai.com/analyses/meeting/789 \
 
 ## Get Analysis by Analysis ID
 
-Retrieve a specific analysis by its ID.
-
-<ParamField body="none" path="id" type="integer" required>
-  The analysis ID
+<ParamField path="id" type="string" required>
+  The analysis UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/analyses/101 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
-```
-
-```200:json
-{
-  "id": 101,
-  "meeting_id": 789,
-  "title": "Product Manager Interview Analysis",
-  "average_score": 85,
-  "total_score": 340,
-  "summary": "Strong performance overall...",
-  "strengths": [...],
-  "growth_areas": [...],
-  "GoalResults": [...]
-}
+curl -X GET https://waterr.ai/backend/analyses/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ## Get All Analyses
 
 Retrieve all analyses for the authenticated user.
 
-<ParamField body="none" path="none" query="none">
-
-</ParamField>
-
 ```bash
-curl -X GET https://api.waterrai.com/analyses \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
-```
-
-```200:json
-[
-  {
-    "id": 101,
-    "meeting_id": 789,
-    "title": "Product Manager Interview Analysis",
-    "average_score": 85,
-    "created_at": "2024-01-15T11:15:00Z"
-  }
-]
+curl -X GET https://waterr.ai/backend/analyses \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ## Get Analyses by Scenario
 
 Retrieve all analyses for meetings conducted with a specific scenario.
 
-<ParamField body="none" path="scenarioId" type="integer" required>
-  The scenario ID
+<ParamField path="scenarioId" type="string" required>
+  The scenario UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/analyses/scenario/456 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/analyses/scenario/{scenarioId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 [
   {
-    "id": 101,
-    "meeting_id": 789,
+    "id": "analysis-uuid",
+    "meeting_id": "meeting-uuid",
     "title": "Product Manager Interview Analysis",
     "average_score": 85,
     "Meeting": {
-      "id": 789,
+      "id": "meeting-uuid",
       "person_name": "John Doe",
       "created_at": "2024-01-15T10:40:00Z"
     },
     "GoalResults": [...]
   }
 ]
+```
+
+## Trigger Manual Analysis
+
+Re-run analysis for a meeting that has already ended. Useful if the original analysis failed or you've updated the scenario's goals.
+
+<ParamField path="meetingId" type="string" required>
+  The meeting UUID
+</ParamField>
+
+```bash
+curl -X POST https://waterr.ai/backend/analyses/trigger/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Highlights
+
+Highlights are key moments extracted from the analysis — notable quotes, turning points, and critical observations.
+
+### Get Highlights by Analysis
+
+<ParamField path="analysisId" type="string" required>
+  The analysis UUID
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/highlights/analysis/{analysisId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Get Highlights by Meeting
+
+<ParamField path="meetingId" type="string" required>
+  The meeting UUID
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/highlights/meeting/{meetingId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Generate Highlights
+
+Trigger highlight generation for an existing analysis.
+
+```bash
+curl -X POST https://waterr.ai/backend/highlights/generate/{analysisId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Delete Highlights
+
+Remove all highlights for an analysis.
+
+```bash
+curl -X DELETE https://waterr.ai/backend/highlights/analysis/{analysisId} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```

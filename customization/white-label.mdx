@@ -1,0 +1,66 @@
+---
+title: White Label
+description: "Remove Waterr branding and use your own brand identity for participant-facing experiences."
+---
+
+# White Label
+
+White labeling lets you present Waterr Meet sessions under your own brand. Participants see your logo, colors, and domain instead of Waterr branding.
+
+## What can be customized
+
+| Element | Standard | White Label |
+|---------|----------|-------------|
+| Session interface | Waterr AI branding | Your brand |
+| Participant emails | Sent from Waterr | Sent from your domain |
+| Share links | meet.waterr.ai/... | yourdomain.com/... |
+| Embed widgets | Waterr attribution | No attribution |
+| End-of-session page | Waterr branded | Your brand |
+
+## Setting up white label
+
+<Note>
+White labeling is available on Enterprise plans. Contact [harshit@waterr.ai](mailto:harshit@waterr.ai) to get started.
+</Note>
+
+### Brand assets
+
+Provide the following to configure your white label:
+
+- **Logo** (light and dark versions, SVG preferred)
+- **Brand colors** (primary, secondary, accent)
+- **Custom domain** (optional -- for share links and embeds)
+- **Email sender** (optional -- for notification emails)
+
+### Custom domain
+
+To use your own domain for session links:
+
+<Steps>
+  <Step title="Choose a subdomain">
+    e.g., `practice.yourcompany.com` or `ai.yourcompany.com`
+  </Step>
+  <Step title="Add a CNAME record">
+    Point your subdomain to `custom.waterr.ai` in your DNS settings.
+  </Step>
+  <Step title="Notify us">
+    Email [harshit@waterr.ai](mailto:harshit@waterr.ai) with your subdomain. We'll configure SSL and routing.
+  </Step>
+</Steps>
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Training Companies" icon="graduation-cap">
+    Offer AI practice sessions as part of your training product without showing third-party branding.
+  </Card>
+  <Card title="HR Platforms" icon="building">
+    Integrate AI interviews into your hiring platform with a seamless, branded experience.
+  </Card>
+  <Card title="EdTech" icon="school">
+    Embed AI tutoring in your learning platform under your own brand.
+  </Card>
+  <Card title="Consulting Firms" icon="briefcase">
+    Deliver AI-powered coaching sessions to clients with your firm's branding.
+  </Card>
+</CardGroup>

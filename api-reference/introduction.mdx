@@ -1,11 +1,11 @@
 ---
-title: 'API Reference'
+title: 'Introduction'
 description: 'Complete API reference for WaterrAI endpoints'
 ---
 
 ## Welcome to the API Reference
 
-This section provides comprehensive documentation for all WaterrAI API endpoints. The API is organized into core areas:
+This section provides comprehensive documentation for all WaterrAI API endpoints.
 
 ## Pre-Setup
 
@@ -58,18 +58,18 @@ This section provides comprehensive documentation for all WaterrAI API endpoints
     Access meeting recordings for playback and review
   </Card>
   <Card
-    title="API Secrets"
-    icon="key"
-    href="/api-reference/api-secrets"
-  >
-    Create and manage API secrets for secure authentication
-  </Card>
-  <Card
     title="Transcripts"
     icon="file-lines"
     href="/api-reference/transcripts"
   >
     Access meeting transcripts (sentence transcripts recommended)
+  </Card>
+  <Card
+    title="API Secrets"
+    icon="key"
+    href="/api-reference/api-secrets"
+  >
+    Create and manage API secrets for secure authentication
   </Card>
 </CardGroup>
 
@@ -94,12 +94,12 @@ API secrets never expire and are ideal for server-to-server communication. See t
 All API requests should be made to:
 
 ```
-https://api.waterrai.com
+https://waterr.ai/backend
 ```
 
 ## Response Format
 
-All API responses follow a consistent format:
+Most API responses follow this format:
 
 **Success Response:**
 ```json
@@ -109,12 +109,19 @@ All API responses follow a consistent format:
 }
 ```
 
+Some endpoints (users, meetings) use an alternate format:
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
 **Error Response:**
 ```json
 {
   "status": "error",
-  "message": "Error description",
-  "details": "Additional error details"
+  "message": "Error description"
 }
 ```
 
@@ -126,5 +133,5 @@ API rate limits are applied per API token. Check response headers for current ra
 - `X-RateLimit-Reset`: Time when the rate limit resets
 
 <Tip>
-  **Getting Started?** Check out our [quickstart guide](/quickstart) to create your first persona, scenario, and meeting in minutes.
+  **Getting Started?** Check out our [quickstart guide](/getting-started/quickstart) to create your first scenario in minutes, or the [API quickstart](/api-reference/quickstart) for a code-first walkthrough.
 </Tip>

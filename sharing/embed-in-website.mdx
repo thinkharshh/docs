@@ -1,0 +1,85 @@
+---
+title: Embed in Website
+description: "Add an AI conversation widget directly to your website or LMS."
+---
+
+# Embed in Website
+
+Embed your AI scenario directly into any website, LMS, or web application. Participants interact with the AI without leaving your page.
+
+## Embed formats
+
+<CardGroup cols={3}>
+  <Card title="Inline" icon="rectangle-wide">
+    Full meeting UI embedded in your page content. Customizable dimensions (default 800x600px). Best for training portals and LMS platforms.
+  </Card>
+  <Card title="Button" icon="circle-play">
+    A floating button that opens the meeting in an overlay. Best for adding to existing pages without layout changes.
+  </Card>
+  <Card title="Avatar Assist" icon="robot">
+    A floating avatar widget (176x265px) in the corner of your page. Participants click to start a conversation. Best for support and onboarding.
+  </Card>
+</CardGroup>
+
+## Getting your embed code
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to embed.
+  </Step>
+  <Step title="Click Share">
+    Click the **Share** button in the scenario header.
+  </Step>
+  <Step title="Go to the Embed tab">
+    Select the **Embed** tab in the share modal.
+  </Step>
+  <Step title="Choose your format">
+    Select **Inline**, **Button**, or **Avatar Assist**.
+  </Step>
+  <Step title="Configure (Inline only)">
+    For Inline embeds, customize:
+    - **Width**: 300-2000px (default 800px)
+    - **Height**: 400-1200px (default 600px)
+    - **Fullscreen**: Allow participants to go fullscreen
+    - **Responsive**: Scale to container width
+  </Step>
+  <Step title="Copy the code">
+    Click **Copy Embed Code** to copy the HTML snippet. Paste it into your website.
+  </Step>
+</Steps>
+
+## Embed code
+
+The generated embed code looks like this:
+
+```html
+<iframe
+  src="https://meet.waterr.ai/embed/inline/{scenario-id}"
+  width="800px"
+  height="600px"
+  frameborder="0"
+  allow="camera; microphone; autoplay; display-capture; fullscreen"
+  style="max-width: 100%;">
+</iframe>
+```
+
+<Warning>
+The `allow` attribute is required for camera, microphone, and screen sharing to work inside the iframe. Your website must be served over **HTTPS** for these browser permissions to work.
+</Warning>
+
+## Compatibility
+
+Embeds work on any website that supports iframes or script tags, including:
+- WordPress, Webflow, Squarespace
+- Learning Management Systems (Canvas, Moodle, Teachable)
+- Custom web applications
+- Notion, Confluence (via embed blocks)
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Microphone not working | Ensure your site uses HTTPS |
+| Embed not loading | Check that the scenario is set to public visibility |
+| Iframe too small | Increase width/height or enable responsive mode |
+| Cross-origin errors | The embed domain must be allowed -- contact support if blocked |

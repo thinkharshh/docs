@@ -1,0 +1,75 @@
+---
+title: Participant Experience
+description: "Customize what participants see and how they interact during a session."
+---
+
+# Participant Experience
+
+Control the session interface, available controls, and overall flow that participants experience.
+
+## Session options
+
+Configure these settings under the **Settings** tab of your scenario.
+
+### Duration
+
+Set the maximum session length. The AI will wrap up the conversation as the time limit approaches.
+
+| Duration | Best for |
+|----------|----------|
+| 10-15 min | Quick screenings, single-topic practice |
+| 20-30 min | Standard interviews, discovery calls |
+| 35-45 min | Full interviews, comprehensive training |
+
+### Meeting controls
+
+Toggle which controls participants have access to:
+
+| Control | Description |
+|---------|-------------|
+| **Camera** | Allow participants to turn on their webcam |
+| **Microphone** | Always enabled (required for conversation) |
+| **Screen Share** | Allow participants to share their screen |
+
+<Note>
+Disabling camera hides the camera toggle from the participant's interface. The AI won't have access to visual information in that case.
+</Note>
+
+### Recording
+
+When recording is enabled:
+- The full session (audio + video) is saved for playback
+- A transcript is generated automatically
+- Participants are notified that the session is being recorded
+
+### Consent prompt
+
+Toggle whether participants see a consent prompt before the session starts. See [Consent](/security/consent) for details.
+
+## Join flow
+
+When a participant clicks your session link, they go through:
+
+1. **Welcome screen** -- Shows persona name, avatar, and scenario description
+2. **Device check** -- Microphone (and optionally camera) permissions
+3. **Consent prompt** -- If enabled, must accept to proceed
+4. **Session starts** -- Live AI conversation begins
+
+## Branding
+
+The session interface shows:
+- Your AI persona's name and avatar
+- The scenario name
+- Your organization name (if configured)
+
+<Tip>
+A professional persona avatar and clear scenario name make a big difference in participant confidence. Avoid generic names like "Test Scenario" for anything participant-facing.
+</Tip>
+
+## End of session
+
+When a session ends (participant leaves or time runs out):
+- The AI delivers a closing message
+- Goal evaluation runs automatically
+- Results are available immediately in your dashboard
+- [Notification emails](/capabilities/notifications) are sent to configured recipients

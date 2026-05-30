@@ -1,0 +1,65 @@
+---
+title: Share Links
+description: "Generate and manage shareable session links."
+---
+
+# Share Links
+
+Every scenario has a unique URL that participants can use to start a session.
+
+## Getting Your Link
+
+<Steps>
+  <Step title="Open your scenario">
+    From the dashboard, click the scenario you want to share.
+  </Step>
+  <Step title="Click Share">
+    In the scenario header (top right), click the **Share** button.
+  </Step>
+  <Step title="Copy the URL">
+    The modal opens with the "Share link" tab selected. Your unique URL is shown in the input field:
+    ```
+    https://meet.waterr.ai/yourname/scenario-name
+    ```
+    Click the **Copy** button to copy it to your clipboard.
+  </Step>
+  <Step title="Set visibility (if needed)">
+    - **Public**: Toggle "Allow anyone with link" ON. Anyone with the URL can start a session.
+    - **Restricted**: Leave it OFF. Only participants you invite via [Scheduling](/sharing/scheduling) can use the link.
+  </Step>
+  <Step title="Share it">
+    Send the copied link via email, Slack, your LMS, or any channel. Participants click the link to start a live AI session.
+  </Step>
+</Steps>
+
+<Note>
+If the Copy button appears disabled, your scenario visibility is set to private. Toggle "Allow anyone with link" on, or use Scheduling to send invite-only links.
+</Note>
+
+## What Participants See
+
+When someone clicks your link, they:
+1. See the scenario welcome page with persona name and avatar
+2. Grant microphone (and optionally camera) permissions
+3. Accept consent prompt (if enabled in [settings](/security/consent))
+4. Start a live conversation with the AI persona
+
+## Link Format
+
+Your scenario link follows this pattern:
+
+```
+https://meet.waterr.ai/{username}/{scenario-slug}
+```
+
+For example: `https://meet.waterr.ai/harshit/sales-discovery-call`
+
+## When to Use Share Links vs. Other Methods
+
+| Use Case | Method |
+|----------|--------|
+| Open practice anyone can access | Public share link |
+| Time-bound assessment for specific people | [Scheduling](/sharing/scheduling) (invite links) |
+| Embed on website or LMS | [Embed code](/sharing/embed-in-website) |
+| Let participants pick their own time | [Booking page](/sharing/booking-page) |
+| Internal team testing | Public share link |

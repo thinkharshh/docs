@@ -1,0 +1,176 @@
+---
+title: 'SDKs'
+description: 'Code examples and helper libraries for integrating the WaterrAI API.'
+---
+
+## Overview
+
+The WaterrAI API is a standard REST API -- you can call it from any language with an HTTP client. Below are ready-to-use examples for the most common languages.
+
+## JavaScript / TypeScript
+
+### Installation
+
+No SDK package needed -- use the built-in `fetch` API or any HTTP client.
+
+### Helper setup
+
+```typescript
+const WATERR_API = 'https://waterr.ai/backend';
+const API_TOKEN = process.env.WATERR_API_TOKEN;
+
+const waterr = {
+  async request(method: string, path: string, body?: any) {
+    const res = await fetch(`${WATERR_API}${path}`, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || `API error: ${res.status}`);
+    }
+    return res.json();
+  },
+
+  // Personas
+  listPersonas: () => waterr.request('GET', '/personas'),
+  createPersona: (data: any) => waterr.request('POST', '/personas', data),
+
+  // Scenarios
+  listScenarios: () => waterr.request('GET', '/scenarios'),
+  createScenario: (data: any) => waterr.request('POST', '/scenarios', data),
+  getScenario: (id: string) => waterr.request('GET', `/scenarios/${id}`),
+
+  // Meetings
+  createMeeting: (data: any) => waterr.request('POST', '/meetings', data),
+  getMeeting: (id: string) => waterr.request('GET', `/meetings/${id}`),
+
+  // Analysis
+  getAnalysis: (meetingId: string) => waterr.request('GET', `/analyses/meeting/${meetingId}`),
+
+  // Transcripts
+  getTranscripts: (meetingId: string) => waterr.request('GET', `/transcripts/meeting/${meetingId}`),
+  getSentencedTranscripts: (scenarioId: string) => waterr.request('GET', `/sentenced-transcripts/scenario/${scenarioId}`),
+};
+```
+
+### Usage
+
+```typescript
+// Create a persona and scenario, then start a meeting
+const persona = await waterr.createPersona({
+  name: 'Sarah Chen',
+  job_title: 'VP of Engineering',
+  demeanor: 'analytical',
+  voice_id: 1,
+});
+
+const scenario = await waterr.createScenario({
+  name: 'System Design Interview',
+  type: 'interview',
+  persona_id: persona.data.id,
+  prompt: 'Conduct a 30-minute system design interview...',
+});
+
+const meeting = await waterr.createMeeting({
+  person_name: 'Candidate Name',
+  scenario_id: scenario.data.id,
+});
+
+console.log('Join URL:', meeting.data.daily_meeting_url);
+```
+
+## Python
+
+```python
+import os
+import requests
+
+WATERR_API = "https://waterr.ai/backend"
+API_TOKEN = os.environ["WATERR_API_TOKEN"]
+
+headers = {
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Content-Type": "application/json",
+}
+
+def create_persona(name, job_title, demeanor="friendly", voice_id=1):
+    res = requests.post(f"{WATERR_API}/personas", headers=headers, json={
+        "name": name,
+        "job_title": job_title,
+        "demeanor": demeanor,
+        "voice_id": voice_id,
+    })
+    res.raise_for_status()
+    return res.json()["data"]
+
+def create_scenario(name, type, persona_id, prompt):
+    res = requests.post(f"{WATERR_API}/scenarios", headers=headers, json={
+        "name": name,
+        "type": type,
+        "persona_id": persona_id,
+        "prompt": prompt,
+    })
+    res.raise_for_status()
+    return res.json()["data"]
+
+def create_meeting(person_name, scenario_id):
+    res = requests.post(f"{WATERR_API}/meetings", headers=headers, json={
+        "person_name": person_name,
+        "scenario_id": scenario_id,
+    })
+    res.raise_for_status()
+    return res.json()["data"]
+
+def get_analysis(meeting_id):
+    res = requests.get(f"{WATERR_API}/analyses/meeting/{meeting_id}", headers=headers)
+    res.raise_for_status()
+    return res.json()
+
+# Usage
+persona = create_persona("Sarah Chen", "VP of Engineering", "analytical")
+scenario = create_scenario("System Design Interview", "interview", persona["id"], "...")
+meeting = create_meeting("John Doe", scenario["id"])
+print(f"Join: {meeting['daily_meeting_url']}")
+```
+
+## cURL
+
+All API reference pages include cURL examples. Here's the pattern:
+
+```bash
+# Set your token once
+export WATERR_TOKEN="wai_your_api_secret_here"
+
+# Then use it in requests
+curl -X GET https://waterr.ai/backend/scenarios \
+  -H "Authorization: Bearer $WATERR_TOKEN"
+```
+
+## Embedding (Daily.co)
+
+Meetings use Daily.co for real-time video. To embed a meeting in your app:
+
+```html
+<iframe
+  src="DAILY_MEETING_URL?t=ROOM_TOKEN"
+  allow="camera; microphone; autoplay; display-capture"
+  style="width: 100%; height: 600px; border: none;"
+></iframe>
+```
+
+Or use the [Daily.co JavaScript SDK](https://docs.daily.co/reference/daily-js) for full control:
+
+```javascript
+import DailyIframe from '@daily-co/daily-js';
+
+const call = DailyIframe.createCallObject();
+await call.join({
+  url: meeting.data.daily_meeting_url,
+  token: meeting.data.room_token,
+});
+```

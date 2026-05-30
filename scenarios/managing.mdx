@@ -1,0 +1,71 @@
+---
+title: Managing Scenarios
+description: "Edit, configure, and organize your scenarios."
+---
+
+# Managing Scenarios
+
+After creating a scenario, you can configure every aspect from the scenario detail page.
+
+## Scenario Detail Page
+
+Click any scenario to open its detail page. You'll see these tabs:
+
+### Playground
+
+Test your scenario in real-time. Start a live session to interact with the AI persona and verify its behavior. Playground sessions are not recorded or scored -- use them for rapid iteration.
+
+### Instructions
+
+Edit the AI's system prompt. This is the core of your scenario -- it controls:
+- How the persona opens the conversation
+- What topics to cover
+- How to respond to specific inputs
+- When to push back or move on
+- The overall structure and flow
+
+<Tip>
+Use the rich text editor to structure your instructions with headers, lists, and emphasis. Well-organized instructions produce more consistent AI behavior.
+</Tip>
+
+### Goals
+
+Add, edit, or remove evaluation goals. See [Goals & Evaluation](/goals/overview) for details.
+
+### Settings
+
+Configure session-level options:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Duration | Maximum session length | 35 minutes |
+| Recording | Whether sessions are recorded | Enabled |
+| Consent | Show consent prompt before starting | Disabled |
+| Webhook URL | POST results when session completes | None |
+| Camera | Allow participant camera | Enabled |
+| Microphone | Allow participant microphone | Enabled |
+| Screen Share | Allow screen sharing | Disabled |
+
+### Responses
+
+View all completed sessions for this scenario. See [Viewing Responses](/responses/viewing) for details.
+
+## Editing a Scenario
+
+### Rename or update description
+
+Click the scenario name or the edit icon in the header to update the title, description, or type.
+
+### Delete a scenario
+
+Use the options menu (three dots) in the scenario header to delete. This removes the scenario and all associated data.
+
+<Warning>
+Deleting a scenario is permanent. All responses, recordings, and scheduled links for that scenario will be lost.
+</Warning>
+
+## Organizing Scenarios
+
+- Use descriptive names that indicate purpose: "Senior SDE System Design Interview" rather than "Interview 1"
+- Set the correct type (Interview, Sales, Training, etc.) for easier filtering
+- Archive old scenarios by deleting unused ones -- there's no limit on how many you can create

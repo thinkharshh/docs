@@ -1,0 +1,86 @@
+---
+title: Scheduling
+description: "Send time-bound invite links to specific participants."
+---
+
+# Scheduling Sessions
+
+Schedule sessions for specific participants at specific times. They receive an email with a unique session link.
+
+## Creating a Scheduled Session
+
+<Steps>
+  <Step title="Open the Scheduling tab">
+    Click **Share** on your scenario, then go to the **"Scheduling"** tab.
+  </Step>
+  <Step title="Add participant emails">
+    Type email addresses in the input field. Press **Enter**, **comma**, or **Tab** to add each one. You can paste multiple comma-separated emails at once.
+  </Step>
+  <Step title="Pick a date and time">
+    - **Date**: Click the date picker and select a future date
+    - **Time**: Choose a 30-minute slot from the dropdown (00:00 - 23:30)
+  </Step>
+  <Step title="Set optional limits">
+    - **Expiry**: Toggle on and set how long after creation the link expires (e.g., 24 hours, 7 days)
+    - **Max Uses**: Set a number to limit how many times the link can be used (e.g., 1 for one-time assessments)
+  </Step>
+  <Step title="Add a link name (optional)">
+    Give it a label for your reference (e.g., "Q2 Sales Cohort - Week 1").
+  </Step>
+  <Step title="Schedule">
+    Click **Schedule**. Each participant receives an email with their unique link.
+  </Step>
+</Steps>
+
+## Managing Scheduled Links
+
+After creating invites, they appear in a list below the form.
+
+### Status Labels
+
+| Status | Meaning |
+|--------|---------|
+| **Active** | Link is live and ready to use |
+| **Scheduled** | Link is created but not yet at start time |
+| **Expired** | Link passed its expiry time |
+| **Revoked** | You manually disabled the link |
+
+### Actions
+
+- **Copy**: Click to copy the session link (for manual sharing)
+- **Revoke**: Immediately disable the link so it can't be used
+
+## Link Format
+
+Scheduled links include a unique code:
+
+```
+https://meet.waterr.ai/{username}/{scenario-name}/{invite-code}
+```
+
+## Common Configurations
+
+<Tabs>
+  <Tab title="Interview Assessment">
+    - 1 email per candidate
+    - 24-hour expiry
+    - 1 max use
+    - Named: "Candidate Name - Role"
+  </Tab>
+  <Tab title="Team Training">
+    - Multiple team member emails
+    - 7-day expiry
+    - 1 max use per person
+    - Named: "Team Training - Week N"
+  </Tab>
+  <Tab title="Open Practice">
+    - No specific emails
+    - 30-day expiry
+    - Unlimited max uses
+    - Named: "Open Practice - Scenario Name"
+  </Tab>
+</Tabs>
+
+<Tip>
+For assessments where fairness matters, always set both an expiry and max uses of 1. This ensures each participant gets exactly one attempt within a defined window.
+</Tip>

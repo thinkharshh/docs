@@ -1,0 +1,104 @@
+---
+title: 'Voices'
+description: 'List and manage available voices for AI personas.'
+openapi: 'POST /voices'
+---
+
+## Overview
+
+Voices define how your AI persona sounds during a session. Each voice has a provider (ElevenLabs, Cartesia, or Azure) and a provider-specific voice ID. Assign a voice to a persona when creating or updating it.
+
+## List All Voices
+
+Retrieve all available voices.
+
+```bash
+curl -X GET https://waterr.ai/backend/voices/all \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+```json
+[
+  {
+    "id": "v1-uuid-...",
+    "name": "Sarah - Professional",
+    "provider": "elevenlabs",
+    "partner_voice_id": "abc123...",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  {
+    "id": "v2-uuid-...",
+    "name": "James - Friendly",
+    "provider": "cartesia",
+    "partner_voice_id": "xyz789...",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+### Response fields
+
+| Field | Description |
+|-------|-------------|
+| `id` | Voice UUID — use this when assigning a voice to a persona or meeting |
+| `name` | Human-readable voice name |
+| `provider` | Voice provider: `elevenlabs`, `cartesia`, or `azure` |
+| `partner_voice_id` | The provider's internal voice ID |
+
+## Get Voice by ID
+
+<ParamField path="id" type="string" required>
+  The voice UUID
+</ParamField>
+
+```bash
+curl -X GET https://waterr.ai/backend/voices/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Using Voices with Personas
+
+Assign a voice when creating a persona:
+
+```bash
+curl -X POST https://waterr.ai/backend/personas \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sarah Chen",
+    "job_title": "VP of Engineering",
+    "demeanor": "analytical",
+    "voice_id": "v1-uuid-..."
+  }'
+```
+
+Or override the voice for a specific meeting:
+
+```bash
+curl -X POST https://waterr.ai/backend/meetings \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "person_name": "John Doe",
+    "scenario_id": "...",
+    "voice_id": "v2-uuid-..."
+  }'
+```
+
+<Tip>
+  If you don't specify a `voice_id` when creating a persona, a default voice is assigned based on the persona's `gender` field.
+</Tip>
+
+## Voice Providers
+
+| Provider | Strengths |
+|----------|-----------|
+| **ElevenLabs** | Most natural sounding, widest voice selection |
+| **Cartesia** | Lowest latency, good for fast-paced conversations |
+| **Azure Speech** | Enterprise-grade, consistent quality |
+
+<Note>
+  Voice availability depends on your plan. Contact support if you need a custom voice clone or a voice not listed in the API.
+</Note>

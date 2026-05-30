@@ -1,0 +1,99 @@
+---
+title: Vision
+description: "Enable your AI persona to see and understand participants through camera and screen sharing."
+---
+
+# Vision
+
+Vision gives your AI persona the ability to see participants via their camera and understand what's on their screen. This enables richer, more contextual conversations.
+
+## Camera Vision
+
+When camera is enabled, the AI can observe facial expressions, body language, and visual cues in real-time.
+
+### What the AI can see
+
+- **Facial expressions** -- Detect engagement, confusion, confidence, and emotional state
+- **Body language** -- Observe posture, gestures, and non-verbal communication
+- **Visual context** -- Understand the participant's environment and any physical objects shown
+
+### Use cases
+
+<CardGroup cols={2}>
+  <Card title="Interview Practice" icon="user-tie">
+    AI observes body language and gives feedback on eye contact, posture, and confidence signals.
+  </Card>
+  <Card title="Healthcare Training" icon="heart-pulse">
+    Detect emotional state during therapy simulations or patient interaction practice.
+  </Card>
+  <Card title="Presentation Coaching" icon="presentation-screen">
+    Analyze delivery, gestures, and visual engagement during pitch practice.
+  </Card>
+  <Card title="Language Learning" icon="language">
+    Observe mouth movements for pronunciation feedback and facial cues for comprehension.
+  </Card>
+</CardGroup>
+
+## Screen Sharing Intelligence
+
+When screen sharing is enabled, the AI can see and understand what's on the participant's screen.
+
+### What the AI can do
+
+- **Read documents** -- Understand text, spreadsheets, and presentations being shared
+- **Analyze applications** -- Recognize software interfaces and guide participants through workflows
+- **Review code** -- Read code on screen and provide real-time feedback
+- **Understand visuals** -- Interpret charts, diagrams, and design mockups
+
+### Use cases
+
+<CardGroup cols={2}>
+  <Card title="Technical Support" icon="screwdriver-wrench">
+    Guide users through software issues by seeing their screen in real-time.
+  </Card>
+  <Card title="Code Review" icon="code">
+    Review code, identify bugs, and suggest improvements as participants share their editor.
+  </Card>
+  <Card title="Design Review" icon="pen-ruler">
+    Provide feedback on designs and mockups shared on screen.
+  </Card>
+  <Card title="Software Training" icon="desktop">
+    Walk participants through applications step-by-step while observing their progress.
+  </Card>
+</CardGroup>
+
+## Enabling Vision
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to configure.
+  </Step>
+  <Step title="Go to Settings">
+    Click the **Settings** tab on the scenario detail page.
+  </Step>
+  <Step title="Enable camera or screen sharing">
+    Under **Meeting Controls**, toggle on:
+    - **Camera** -- Allows participants to share their webcam
+    - **Screen Share** -- Allows participants to share their screen
+  </Step>
+</Steps>
+
+<Note>
+Participants always control whether to turn on their camera or share their screen. Enabling these settings makes the option available -- it doesn't force it.
+</Note>
+
+## Writing Vision-Aware Scripts
+
+To get the most out of vision, reference it in your [meeting script](/customization/meeting-script):
+
+```markdown
+## Visual Awareness
+- If the participant appears confused (furrowed brow, hesitation), 
+  offer to clarify or rephrase your question
+- When they share their screen, reference specific elements you see
+- If presenting, comment on their delivery and body language
+```
+
+<Tip>
+You don't need to explicitly tell the AI to "use vision." When camera or screen sharing is active, the AI automatically incorporates visual information. Use script instructions to guide *how* it should respond to what it sees.
+</Tip>

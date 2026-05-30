@@ -1,0 +1,346 @@
+---
+title: "Quick Start"
+description: "Get started with WaterrAI API in minutes"
+---
+
+## Quick Start
+
+Create a persona, scenario, and meeting in three steps. By the end, you'll have a live AI conversation room URL.
+
+### Prerequisites
+
+- An [API secret](/api-reference/authentication) (recommended) or JWT token
+- Your `membership_id` and `org_id` from the [active workspace](/api-reference/users) endpoint
+
+```bash
+# Get your workspace info first
+curl -X GET https://waterr.ai/backend/users/active-workspace \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+Save the `id` (your `membership_id`) and `org_id` from the response.
+
+## Step 1: Create a Persona
+
+A persona defines who the AI is — name, role, personality, voice, and avatar.
+
+```bash
+curl -X POST https://waterr.ai/backend/personas \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sarah Chen",
+    "job_title": "VP of Engineering",
+    "demeanor": "analytical",
+    "background": "15 years building distributed systems at scale. Led engineering at two startups through Series B. Known for deep technical interviews that test real-world problem solving.",
+    "gender": "female",
+    "voice_id": "VOICE_UUID"
+  }'
+```
+
+<ParamField body="name" type="string" required>
+  Full name of the AI persona
+</ParamField>
+
+<ParamField body="job_title" type="string" required>
+  Professional title (shown to participants)
+</ParamField>
+
+<ParamField body="demeanor" type="string">
+  Personality style. Options: `friendly`, `analytical`, `empathetic`, `curious`, `enthusiastic`, `critical`, `casual`, `blunt`, `assertive`, `neutral`
+</ParamField>
+
+<ParamField body="background" type="string">
+  Detailed background — the more specific, the better the AI's follow-up questions
+</ParamField>
+
+<ParamField body="gender" type="string">
+  `male` or `female` — used for default voice and avatar selection
+</ParamField>
+
+<ParamField body="voice_id" type="string">
+  Voice UUID from the [Voices API](/api-reference/voices). If omitted, a default voice is assigned based on gender.
+</ParamField>
+
+<Note>
+  Save the `id` from the response — you'll need it in the next step.
+</Note>
+
+## Step 2: Create a Scenario
+
+A scenario combines a persona with conversation instructions, goals, and settings. This is where you define *what* the conversation is about.
+
+```bash
+curl -X POST https://waterr.ai/backend/scenarios \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "System Design Interview",
+    "description": "Practice system design interviews for senior backend roles",
+    "type": "interview",
+    "persona_id": "PERSONA_UUID_FROM_STEP_1",
+    "prompt": "You are Sarah Chen, VP of Engineering at a Series B startup.\n\n## Flow\n1. Brief intro (2 min)\n2. System design: \"Design a rate limiter for 100K req/sec\" (15 min)\n3. Follow-up questions on trade-offs (5 min)\n4. Their questions (3 min)\n\n## Rules\n- Ask one question at a time\n- Push back on hand-wavy answers\n- If stuck, give ONE hint then move on\n- Never reveal the scoring criteria",
+    "call_duration": 25,
+    "welcome_message": "Hi! I'\''m Sarah, VP of Engineering. Thanks for joining — let'\''s jump into a system design discussion.",
+    "visibility": "public",
+    "goals": ["GOAL_UUID_1", "GOAL_UUID_2"]
+  }'
+```
+
+<ParamField body="name" type="string" required>
+  Scenario name (shown in dashboard and to participants)
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Category. Options: `interview`, `roleplay`, `upskill`, `brainstorm`
+</ParamField>
+
+<ParamField body="persona_id" type="string" required>
+  UUID of the persona from Step 1
+</ParamField>
+
+<ParamField body="prompt" type="string">
+  The meeting script — conversation flow, behavioral rules, and guardrails. Markdown supported. See the [Prompting Guide](/api-reference/prompting-guide) for how to write effective prompts.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Short description shown to participants on the join page
+</ParamField>
+
+<ParamField body="call_duration" type="integer">
+  Maximum session length in minutes (default: 30)
+</ParamField>
+
+<ParamField body="welcome_message" type="string">
+  The AI's opening line when the participant joins. If omitted, one is auto-generated from the prompt.
+</ParamField>
+
+<ParamField body="visibility" type="string">
+  `public` (embeddable, shareable) or `restricted` (invite-only). Default: `public`
+</ParamField>
+
+<ParamField body="goals" type="array">
+  Array of [Goal](/api-reference/goals) UUIDs for post-session evaluation
+</ParamField>
+
+<ParamField body="user_prompt" type="string">
+  Your original plain-text description (stored for reference, not shown to AI)
+</ParamField>
+
+<Tip>
+  **Shortcut:** Use `POST /scenarios/create-with-gpt` to generate a complete scenario (persona + prompt + goals) from a single text description. See [AI-Generated Scenarios](#ai-generated-scenarios) below.
+</Tip>
+
+## Step 3: Create a Meeting
+
+A meeting is a live session instance. Creating one spins up a Daily.co video room with your AI persona ready to talk.
+
+```bash
+curl -X POST https://waterr.ai/backend/meetings \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "person_name": "John Doe",
+    "scenario_id": "SCENARIO_UUID_FROM_STEP_2"
+  }'
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "meeting-uuid",
+    "daily_meeting_id": "abc123",
+    "daily_meeting_url": "https://waterr-xx.daily.co/abc123",
+    "room_token": "eyJhbGciOiJIUzI1NiIs...",
+    "person_name": "John Doe",
+    "scenario_id": "scenario-uuid",
+    "status": "created",
+    "meeting_url": "https://waterr.ai/meeting/meeting-uuid"
+  },
+  "session_minutes_info": {
+    "estimatedMinutes": 25,
+    "remainingMinutes": 75
+  }
+}
+```
+
+<ParamField body="person_name" type="string" required>
+  Name of the participant joining the session
+</ParamField>
+
+<ParamField body="scenario_id" type="string" required>
+  UUID of the scenario to use
+</ParamField>
+
+<ParamField body="voice_id" type="string">
+  Override the persona's default voice for this specific session
+</ParamField>
+
+<ParamField body="meeting_type" type="string">
+  `regular` (default) or `instant`
+</ParamField>
+
+<ParamField body="note_context" type="string">
+  Session-specific context injected into the AI's prompt. Example: "Candidate has 8 years at Google, focus on ML infrastructure." This customizes the conversation without changing the shared scenario.
+</ParamField>
+
+### Joining the meeting
+
+Use the `daily_meeting_url` to join. Two options:
+
+**Option A: Redirect the participant**
+```
+https://waterr.ai/meeting/{meeting_id}
+```
+
+**Option B: Embed with Daily.co SDK**
+```javascript
+import DailyIframe from '@daily-co/daily-js';
+
+const call = DailyIframe.createCallObject();
+await call.join({
+  url: response.data.daily_meeting_url,
+  token: response.data.room_token,
+});
+```
+
+---
+
+## AI-Generated Scenarios
+
+Skip Steps 1-2 entirely. Describe what you want in plain text and the AI generates a complete scenario with persona, prompt, and goals.
+
+```bash
+curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -F 'userInput=I need a technical interview for a senior backend engineer. Focus on system design and distributed systems. 25 minutes.' \
+  -F 'duration=25' \
+  -F 'allow_live_vision=false' \
+  -F 'allow_web_search=false'
+```
+
+You can also attach a resume or job description:
+
+```bash
+curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -F 'userInput=Interview this candidate for a backend role' \
+  -F 'file=@resume.pdf' \
+  -F 'duration=30'
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "scenario_id": "generated-scenario-uuid",
+    "scenario_type": "interview",
+    "generatedPersona": {
+      "name": "Priya Sharma",
+      "job_title": "Staff Engineer",
+      "background": "...",
+      "avatar": "https://...",
+      "voice_id": "..."
+    },
+    "createdGoals": [
+      { "id": "...", "name": "Technical Depth", "description": "..." },
+      { "id": "...", "name": "System Design", "description": "..." },
+      { "id": "...", "name": "Communication", "description": "..." }
+    ]
+  }
+}
+```
+
+Use the returned `scenario_id` directly in Step 3 to create a meeting.
+
+---
+
+## Complete Example (JavaScript)
+
+```javascript
+const API = 'https://waterr.ai/backend';
+const TOKEN = process.env.WATERR_API_TOKEN;
+const headers = { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+// Option A: Full control — create persona + scenario + meeting
+async function createFullMeeting() {
+  // 1. Create Persona
+  const persona = await fetch(`${API}/personas`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      name: "Sarah Chen",
+      job_title: "VP of Engineering",
+      demeanor: "analytical",
+      background: "15 years in distributed systems...",
+      gender: "female",
+    })
+  }).then(r => r.json());
+
+  // 2. Create Scenario
+  const scenario = await fetch(`${API}/scenarios`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      name: "System Design Interview",
+      type: "interview",
+      persona_id: persona.data.id,
+      prompt: "You are Sarah Chen, VP of Engineering...",
+      call_duration: 25,
+      welcome_message: "Hi! I'm Sarah. Let's talk system design.",
+    })
+  }).then(r => r.json());
+
+  // 3. Create Meeting
+  const meeting = await fetch(`${API}/meetings`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      person_name: "John Doe",
+      scenario_id: scenario.data.id,
+    })
+  }).then(r => r.json());
+
+  console.log('Join URL:', meeting.data.daily_meeting_url);
+  console.log('Minutes remaining:', meeting.session_minutes_info.remainingMinutes);
+}
+
+// Option B: Let AI generate everything
+async function createQuickMeeting() {
+  const formData = new FormData();
+  formData.append('userInput', 'Technical interview for senior backend engineer, 25 minutes');
+  formData.append('duration', '25');
+
+  const scenario = await fetch(`${API}/scenarios/create-with-gpt`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${TOKEN}` },
+    body: formData,
+  }).then(r => r.json());
+
+  const meeting = await fetch(`${API}/meetings`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      person_name: "John Doe",
+      scenario_id: scenario.data.scenario_id,
+    })
+  }).then(r => r.json());
+
+  console.log('Join URL:', meeting.data.daily_meeting_url);
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Lifecycle" icon="circle-nodes" href="/api-reference/session-lifecycle">
+    Understand what happens after the meeting ends — analysis, transcripts, recordings.
+  </Card>
+  <Card title="Prompting Guide" icon="wand-magic-sparkles" href="/api-reference/prompting-guide">
+    Write prompts that produce natural, consistent AI conversations.
+  </Card>
+  <Card title="Goals" icon="bullseye" href="/api-reference/goals">
+    Set up evaluation criteria to score participants automatically.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks">
+    Get notified when sessions complete with full analysis results.
+  </Card>
+</CardGroup>

@@ -1,0 +1,54 @@
+---
+title: Data Encryption
+description: "How Waterr Meet protects your data with encryption at rest and in transit."
+---
+
+# Data Encryption
+
+Waterr Meet encrypts all data both in transit and at rest to protect your conversations, recordings, and participant information.
+
+## In transit
+
+All data moving between participants, Waterr servers, and AI providers is encrypted:
+
+- **HTTPS/TLS 1.3** for all API and web traffic
+- **DTLS + SRTP** for real-time audio and video streams (WebRTC)
+- **WSS** (WebSocket Secure) for real-time messaging
+
+No unencrypted data ever leaves the participant's device.
+
+## At rest
+
+Stored data is encrypted using industry-standard methods:
+
+| Data Type | Encryption | Storage |
+|-----------|-----------|---------|
+| Session recordings | AES-256 | Azure Blob Storage (encrypted) |
+| Transcripts | AES-256 | PostgreSQL (encrypted at rest) |
+| User credentials | bcrypt + salted hashing | PostgreSQL |
+| API keys | AES-256 | Encrypted key store |
+| Session tokens | JWT with RS256 signing | Short-lived, rotated |
+
+## Infrastructure
+
+- **Cloud provider**: Microsoft Azure with SOC 2 compliant infrastructure
+- **Database**: PostgreSQL with transparent data encryption
+- **File storage**: Azure Blob Storage with server-side encryption
+- **Secrets**: Managed through environment-level encryption, never stored in code
+
+## Access controls
+
+- All API endpoints require authentication (JWT tokens)
+- Session data is scoped to the organization that created the scenario
+- Participants can only access their own session data
+- Admin roles control who can view recordings and transcripts within an organization
+
+## Data retention
+
+- Session recordings and transcripts are retained according to your organization's settings
+- Participants can request deletion of their session data
+- Deleted data is permanently removed within 30 days
+
+<Note>
+For enterprise customers with specific compliance requirements (HIPAA, SOC 2 Type II), contact us at [harshit@waterr.ai](mailto:harshit@waterr.ai) to discuss dedicated infrastructure options.
+</Note>

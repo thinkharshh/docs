@@ -1,0 +1,76 @@
+---
+title: Booking Page
+description: "Let participants schedule their own sessions via a Cal.com booking page."
+---
+
+# Booking Page
+
+Give participants a self-service scheduling experience. Connect Cal.com to your scenario and participants can pick a time that works for them.
+
+## How it works
+
+1. You connect your Cal.com account to Waterr Meet
+2. You enable booking for a scenario and select a Cal.com event type
+3. Participants visit your booking page URL and pick a time slot
+4. They receive a calendar invite with the session link
+
+## Setting up booking
+
+<Steps>
+  <Step title="Connect Cal.com">
+    Go to your scenario **Settings** tab. Under the **Booking** section, click **Connect Cal.com**. Enter your Cal.com API key when prompted.
+  </Step>
+  <Step title="Enable booking">
+    Toggle **Enable Booking Page** on.
+  </Step>
+  <Step title="Select an event type">
+    Choose which Cal.com event type to use for this scenario. Your available event types are pulled from your Cal.com account.
+  </Step>
+</Steps>
+
+<Note>
+You need a Cal.com account with at least one event type configured. [Create one at cal.com](https://cal.com) if you don't have one yet.
+</Note>
+
+## Booking page URL
+
+Once enabled, your booking page is available at:
+
+```
+https://meet.waterr.ai/{username}/b/{scenario-slug}
+```
+
+For example: `https://meet.waterr.ai/harshit/b/sales-discovery-call`
+
+## Sharing the booking page
+
+The booking URL appears in the **Share** modal under the booking section. Click **Copy** to copy it.
+
+You can share this URL:
+- In emails to candidates or trainees
+- On your website or LMS
+- In calendar invites or Slack messages
+
+## What participants see
+
+When a participant visits the booking page, they see:
+
+1. The AI persona's name and avatar
+2. The scenario name and description
+3. Session duration
+4. An embedded Cal.com calendar to pick a time slot
+
+After booking, they receive a calendar invite with the session link included.
+
+## When to use booking vs. other sharing methods
+
+| Method | Best for |
+|--------|----------|
+| **Booking page** | Letting participants self-schedule at their convenience |
+| [Share link](/sharing/links) | Immediate access without scheduling |
+| [Scheduling](/sharing/scheduling) | You pick the time and send invites |
+| [Embed](/sharing/embed-in-website) | Adding the session directly to your website |
+
+<Tip>
+Booking pages work well for interview practice scenarios where candidates should prepare and choose a time that suits them, rather than jumping in immediately.
+</Tip>

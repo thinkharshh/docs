@@ -1,395 +1,187 @@
 ---
-title: 'Meetings API'
+title: 'Meetings'
 description: 'Create meetings from scenarios and manage meeting sessions'
+openapi: 'POST /meetings'
 ---
 
 ## Overview
 
-Meetings are active conversation sessions created from scenarios. Creating a meeting returns a meeting room URL and token that can be used to join the conversation.
+A meeting is a live AI conversation session created from a scenario. Creating one spins up a Daily.co video room with your AI persona ready to talk and returns the room URL and token.
 
-<Card
-  title="Looking for meeting analysis?"
-  icon="chart-line"
-  href="/api-reference/analysis"
->
-  Analysis endpoints are documented separately.
-</Card>
+## Create Meeting
 
-## Create Meeting from Scenario
-
-Create a new meeting using a scenario. This returns a meeting room URL and token that can be used to join the conversation.
-
-### Required Parameters
+Create a new meeting from a scenario. This is the main endpoint you call to start a session for a participant.
 
 <ParamField body="person_name" type="string" required>
-  Name of the person joining the meeting
+  Name of the participant joining the session
 </ParamField>
 
-<ParamField body="scenario_id" type="integer" required>
-  ID of the scenario to create the meeting from
+<ParamField body="scenario_id" type="string" required>
+  UUID of the scenario to use
 </ParamField>
 
-### Optional Parameters
+<ParamField body="voice_id" type="string">
+  Override the persona's default voice for this session. Get available voices from the [Voices API](/api-reference/voices).
+</ParamField>
 
 <ParamField body="meeting_type" type="string">
-  Type of meeting. Options: `regular`, `end-user` (default: `regular`)
+  `regular` (default) or `instant`
 </ParamField>
 
-<ParamField body="voice_id" type="string">
-  Voice ID for the AI persona (e.g., ElevenLabs voice ID like `6MoEUz34rbRrmmyxgRm4`)
-</ParamField>
-
-<ParamField body="voice_vendor" type="string">
-  Voice provider. Options: `elevenlabs`, `azure`, `cartesia` (default: `azure`)
-</ParamField>
-
-<ParamField body="end_user_id" type="integer">
-  End user ID (for end-user meetings)
-</ParamField>
-
-<ParamField body="language" type="string">
-  Language for the meeting session (default: `English`)
-</ParamField>
-
-<ParamField body="welcome_message" type="string">
-  Custom welcome message for the AI to use at the start of the meeting
-</ParamField>
-
-### Meeting Controls
-
-These settings control the meeting behavior and participant permissions:
-
-<ParamField body="allow_recording" type="boolean">
-  Enable/disable meeting recording (default: `true`)
-</ParamField>
-
-<ParamField body="allow_transcription" type="boolean">
-  Enable/disable live transcription (default: `false`)
-</ParamField>
-
-<ParamField body="allow_chat" type="boolean">
-  Enable/disable chat functionality (default: `false`)
-</ParamField>
-
-<ParamField body="allow_screen_share" type="boolean">
-  Enable/disable screen sharing (default: `false`)
-</ParamField>
-
-<ParamField body="allow_participant_video" type="boolean">
-  Enable/disable participant video (default: `false`)
-</ParamField>
-
-<ParamField body="allow_participant_audio" type="boolean">
-  Enable/disable participant audio (default: `true`)
-</ParamField>
-
-<ParamField body="max_participants" type="integer">
-  Maximum number of participants allowed (default: `null` - unlimited)
-</ParamField>
-
-<ParamField body="waiting_room_enabled" type="boolean">
-  Enable/disable waiting room (default: `false`)
-</ParamField>
-
-<ParamField body="auto_admit" type="boolean">
-  Automatically admit participants (default: `false`)
-</ParamField>
-
-<ParamField body="meeting_duration_minutes" type="integer">
-  Maximum meeting duration in minutes (default: scenario's `call_duration` or `30`)
-</ParamField>
-
-### AI Configuration
-
-<ParamField body="deep_think" type="boolean">
-  Enable deep thinking mode for more thoughtful AI responses (default: `false`)
-</ParamField>
-
-<ParamField body="is_live_llm_service" type="boolean">
-  Enable live LLM vision service for real-time visual understanding (default: `false`)
-</ParamField>
-
-<ParamField body="use_gpt_vision" type="boolean">
-  Use GPT vision capabilities (default: `false`)
-</ParamField>
-
-<ParamField body="allow_web_search" type="boolean">
-  Allow AI to perform web searches during the meeting (default: `false`)
-</ParamField>
-
-<ParamField body="use_own_keys" type="boolean">
-  Use your own API keys for AI services (default: `false`)
+<ParamField body="note_context" type="string">
+  Session-specific context injected into the AI's prompt without changing the scenario. Use this to personalize: "Candidate has 8 years at Google, specializes in ML infrastructure."
 </ParamField>
 
 ```bash
-curl -X POST https://api.waterrai.com/meetings \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN" \
+curl -X POST https://waterr.ai/backend/meetings \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "person_name": "John Doe",
-    "scenario_id": 456,
-    "meeting_type": "regular",
-    "language": "English",
-    "meeting_duration_minutes": 35,
-    "allow_recording": true,
-    "allow_transcription": false,
-    "allow_chat": false,
-    "allow_screen_share": false,
-    "allow_participant_video": false,
-    "allow_participant_audio": true,
-    "deep_think": false
+    "scenario_id": "scenario-uuid",
+    "note_context": "Candidate previously worked on distributed caching at scale. Focus on consistency vs availability trade-offs."
   }'
 ```
 
-```201:json
+### Response
+
+```json
 {
   "success": true,
   "data": {
-    "id": 789,
-    "room_url": "https://waterrai.daily.co/abc123",
-    "room_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id": "meeting-uuid",
+    "daily_meeting_id": "abc123",
+    "daily_meeting_url": "https://waterr-xx.daily.co/abc123",
+    "room_token": "eyJhbGciOiJIUzI1NiIs...",
+    "meeting_url": "https://waterr.ai/meeting/meeting-uuid",
     "person_name": "John Doe",
-    "scenario_id": 456,
+    "scenario_id": "scenario-uuid",
     "status": "created",
     "meeting_type": "regular",
-    "created_at": "2024-01-15T10:40:00Z"
-  },
-  "session_minutes_info": {
-    "estimatedMinutes": 35,
-    "remainingMinutes": 265
-  }
-}
-```
-
-<Note>
-  Use the `room_url` and `room_token` to join the meeting. The meeting will be automatically tracked and analyzed after completion.
-</Note>
-
-## Create Dynamic Meeting
-
-Create a meeting with dynamic end-user creation. This endpoint creates an end-user on the fly from the payload (if they don't already exist), creates the meeting, and returns URLs with user ID query parameters.
-
-This is ideal for scenarios where you want to programmatically create meetings for users without requiring them to register first.
-
-### Required Parameters
-
-<ParamField body="scenario_id" type="integer" required>
-  ID of the scenario to create the meeting from
-</ParamField>
-
-### User Information
-
-<ParamField body="person_name" type="string">
-  Name of the person joining the meeting. If not provided, will be constructed from first_name and last_name.
-</ParamField>
-
-<ParamField body="email" type="string">
-  Email of the end user. If provided and the user already exists, their existing account will be used. If not provided, an anonymous user is created.
-</ParamField>
-
-<ParamField body="first_name" type="string">
-  First name of the end user
-</ParamField>
-
-<ParamField body="last_name" type="string">
-  Last name of the end user
-</ParamField>
-
-### Voice Configuration
-
-<ParamField body="voice_id" type="string">
-  Voice ID for the AI persona (e.g., ElevenLabs voice ID like `6MoEUz34rbRrmmyxgRm4`)
-</ParamField>
-
-<ParamField body="voice_vendor" type="string">
-  Voice provider. Options: `elevenlabs`, `azure`, `cartesia` (default: `azure`)
-</ParamField>
-
-### Session Settings
-
-<ParamField body="language" type="string">
-  Language for the meeting session (default: `English`)
-</ParamField>
-
-<ParamField body="welcome_message" type="string">
-  Custom welcome message for the AI to use at the start of the meeting
-</ParamField>
-
-<ParamField body="user_metadata" type="object">
-  Optional metadata object to pass to the meeting session. This can include custom data like company info, role, or any contextual information.
-</ParamField>
-
-### Meeting Controls
-
-<ParamField body="allow_recording" type="boolean">
-  Enable/disable meeting recording (default: `true`)
-</ParamField>
-
-<ParamField body="allow_transcription" type="boolean">
-  Enable/disable live transcription (default: `false`)
-</ParamField>
-
-<ParamField body="allow_chat" type="boolean">
-  Enable/disable chat functionality (default: `false`)
-</ParamField>
-
-<ParamField body="allow_screen_share" type="boolean">
-  Enable/disable screen sharing (default: `false`)
-</ParamField>
-
-<ParamField body="allow_participant_video" type="boolean">
-  Enable/disable participant video (default: `false`)
-</ParamField>
-
-<ParamField body="allow_participant_audio" type="boolean">
-  Enable/disable participant audio (default: `true`)
-</ParamField>
-
-<ParamField body="max_participants" type="integer">
-  Maximum number of participants allowed (default: `null` - unlimited)
-</ParamField>
-
-<ParamField body="waiting_room_enabled" type="boolean">
-  Enable/disable waiting room (default: `false`)
-</ParamField>
-
-<ParamField body="auto_admit" type="boolean">
-  Automatically admit participants (default: `false`)
-</ParamField>
-
-<ParamField body="meeting_duration_minutes" type="integer">
-  Maximum meeting duration in minutes (default: scenario's `call_duration` or `30`)
-</ParamField>
-
-### AI Configuration
-
-<ParamField body="deep_think" type="boolean">
-  Enable deep thinking mode for more thoughtful AI responses (default: `false`)
-</ParamField>
-
-<ParamField body="is_live_llm_service" type="boolean">
-  Enable live LLM vision service for real-time visual understanding (default: `false`)
-</ParamField>
-
-<ParamField body="use_gpt_vision" type="boolean">
-  Use GPT vision capabilities (default: `false`)
-</ParamField>
-
-<ParamField body="allow_web_search" type="boolean">
-  Allow AI to perform web searches during the meeting (default: `false`)
-</ParamField>
-
-<ParamField body="use_own_keys" type="boolean">
-  Use your own API keys for AI services (default: `false`)
-</ParamField>
-
-```bash
-curl -X POST https://api.waterrai.com/meetings/create-dynamic-meeting \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "scenario_id": 456,
-    "person_name": "Jane Smith",
-    "email": "jane.smith@example.com",
-    "first_name": "Jane",
-    "last_name": "Smith",
-    "language": "English",
-    "meeting_duration_minutes": 35,
-    "allow_recording": true,
-    "allow_transcription": false,
-    "allow_chat": false,
-    "allow_screen_share": false,
-    "allow_participant_video": false,
-    "allow_participant_audio": true,
-    "deep_think": false,
-    "welcome_message": "Hello! I am ready to help you practice today.",
-    "user_metadata": {
-      "company": "Acme Inc",
-      "role": "Sales Manager"
-    }
-  }'
-```
-
-```201:json
-{
-  "success": true,
-  "data": {
-    "id": 790,
-    "room_url": "https://waterrai.daily.co/xyz789",
-    "room_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "person_name": "Jane Smith",
-    "scenario_id": 456,
-    "status": "created",
-    "meeting_type": "end-user",
     "scenario": {
-      "id": 456,
-      "name": "Enterprise Software Objection Handling",
-      "type": "roleplay",
-      "description": "Overcoming pricing and implementation hurdles with procurement.",
-      "scenario_link": "sales-training-101"
-    },
-    "end_user": {
-      "id": 123,
-      "first_name": "Jane",
-      "last_name": "Smith",
-      "email": "jane.smith@example.com",
-      "membership_id": 456
+      "name": "System Design Interview",
+      "type": "interview",
+      "description": "Practice system design for senior backend roles"
     }
   },
-  "meeting_url": "https://waterrai.daily.co/xyz789?end_user_id=123&membership_id=456",
-  "scenario_url": "https://app.waterrai.com/s/sales-training-101?end_user_id=123&membership_id=456",
   "session_minutes_info": {
-    "estimatedMinutes": 35,
-    "remainingMinutes": 265
+    "estimatedMinutes": 25,
+    "remainingMinutes": 75
   }
 }
 ```
 
-<Note>
-  **Key Features:**
-  - **Automatic User Creation:** If the email doesn't exist, a new end-user is created automatically
-  - **Existing User Lookup:** If the email exists, the existing user account is reused
-  - **Anonymous Users:** If no email is provided, an anonymous end-user is created
-  - **URL with Query Params:** Both `meeting_url` and `scenario_url` include `end_user_id` and `membership_id` as query parameters
-</Note>
+### Key response fields
 
-<Tip>
-  **Use Cases:**
-  - Embed scenarios in your app and create meetings for your users without requiring Water AI registration
-  - Track individual user sessions with their email for analytics
-  - Create anonymous practice sessions when user identity isn't needed
-</Tip>
+| Field | Use |
+|-------|-----|
+| `daily_meeting_url` | The Daily.co room URL — embed this or redirect the participant here |
+| `room_token` | Auth token for the Daily.co room (needed for SDK-based joins) |
+| `meeting_url` | WaterrAI-hosted meeting page URL (participant-friendly) |
+| `id` | Meeting UUID — use this to fetch analysis, transcript, and recording later |
+| `session_minutes_info` | Your remaining session minutes after this meeting |
+
+### Joining the meeting
+
+**Option 1: WaterrAI hosted page** — redirect the participant to `meeting_url`:
+```
+https://waterr.ai/meeting/{meeting_id}
+```
+
+**Option 2: Embed with iframe**
+```html
+<iframe
+  src="DAILY_MEETING_URL?t=ROOM_TOKEN"
+  allow="camera; microphone; autoplay; display-capture"
+  style="width: 100%; height: 600px; border: none;"
+></iframe>
+```
+
+**Option 3: Daily.co SDK** (full control over UI)
+```javascript
+import DailyIframe from '@daily-co/daily-js';
+
+const call = DailyIframe.createCallObject();
+await call.join({
+  url: response.data.daily_meeting_url,
+  token: response.data.room_token,
+});
+```
+
+## Create End-User Meeting
+
+For public/embedded scenarios — no JWT required. Uses the `allowEmbed` middleware.
+
+```bash
+curl -X POST https://waterr.ai/backend/meetings/end-user \
+  -H "Content-Type: application/json" \
+  -d '{
+    "person_name": "Jane Smith",
+    "scenario_id": "scenario-uuid",
+    "end_user_id": "end-user-uuid"
+  }'
+```
+
+<ParamField body="end_user_id" type="string" required>
+  UUID of the end user (from your auth flow). Session minutes are billed to the scenario creator's account.
+</ParamField>
+
+<Note>
+  End-user meetings consume session minutes from the **scenario creator's** account, not the end user's. This is how embedded and public scenarios work.
+</Note>
 
 ## Get Meeting by ID
 
-Retrieve details of a specific meeting.
-
-<ParamField body="none" path="id" type="integer" required>
-  The meeting ID
+<ParamField path="id" type="string" required>
+  The meeting UUID
 </ParamField>
 
 ```bash
-curl -X GET https://api.waterrai.com/meetings/789 \
-  -H "Authorization: Bearer YOUR_API_SECRET_OR_JWT_TOKEN"
+curl -X GET https://waterr.ai/backend/meetings/{id} \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-```200:json
+```json
 {
   "status": "success",
   "data": {
-    "id": 789,
-    "room_url": "https://waterrai.daily.co/abc123",
-    "room_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id": "meeting-uuid",
+    "daily_meeting_id": "abc123",
+    "daily_meeting_url": "https://waterr-xx.daily.co/abc123",
     "person_name": "John Doe",
-    "scenario_id": 456,
-    "meeting_type": "regular",
+    "scenario_id": "scenario-uuid",
     "status": "ended",
+    "duration_seconds": 1420,
     "created_at": "2024-01-15T10:40:00Z",
-    "updated_at": "2024-01-15T11:10:00Z"
+    "ended_at": "2024-01-15T11:03:40Z"
   }
 }
 ```
 
-<Tip>
-  Need analysis results? See the separate [Analysis API](/api-reference/analysis).
-</Tip>
+## End Meeting
+
+Programmatically end a meeting (e.g., when a time limit is reached).
+
+```bash
+curl -X PUT https://waterr.ai/backend/meetings/{meetingId}/end \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Delete Meeting
+
+Soft-delete a meeting (marks as deleted but preserves data).
+
+```bash
+curl -X PATCH https://waterr.ai/backend/meetings/{meetingId}/soft-delete \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## What happens after a meeting ends
+
+1. **Recording** is finalized and uploaded (~2-5 min)
+2. **Transcript** is processed into sentences (~30 sec)
+3. **Analysis** with goal scores is generated (~60 sec)
+4. **Webhook** fires (if configured) with full results
+5. **Email notifications** sent to configured recipients
+
+See [Session Lifecycle](/api-reference/session-lifecycle) for the complete flow and how to poll or listen for results.

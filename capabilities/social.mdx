@@ -1,0 +1,72 @@
+---
+title: Social
+description: "Connect social profiles to enrich AI conversations with participant context."
+---
+
+# Social
+
+Social integration lets your AI persona access publicly available information about participants from their professional profiles. This creates more personalized, context-aware conversations.
+
+## How it works
+
+When a participant joins a session, the AI can reference their professional background, experience, and interests to tailor the conversation. This makes interactions feel more natural and relevant.
+
+### What the AI can reference
+
+- Professional title and company
+- Industry and domain expertise
+- Career history and experience level
+- Skills and areas of interest
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Personalized Interviews" icon="user-tie">
+    The AI interviewer references the candidate's actual experience and asks relevant follow-up questions about their background.
+  </Card>
+  <Card title="Sales Discovery" icon="handshake">
+    AI prospect knows the salesperson's company, product, and recent announcements for realistic discovery calls.
+  </Card>
+  <Card title="Networking Practice" icon="users">
+    Practice introductions and conversations where the AI references real professional context.
+  </Card>
+  <Card title="Executive Coaching" icon="chess-king">
+    AI coach draws on the participant's career trajectory and industry to provide relevant guidance.
+  </Card>
+</CardGroup>
+
+## Enabling Social
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want to configure.
+  </Step>
+  <Step title="Go to Settings">
+    Click the **Settings** tab.
+  </Step>
+  <Step title="Enable Social">
+    Toggle on **Social** under capabilities.
+  </Step>
+</Steps>
+
+## Privacy considerations
+
+<Note>
+Social integration only uses publicly available professional information. No private data is accessed. Participants are informed when social context is being used, and you can disable it at any time.
+</Note>
+
+## Writing social-aware scripts
+
+Reference social context in your [meeting script](/customization/meeting-script):
+
+```markdown
+## Personalization
+- Review the participant's professional background before starting
+- Reference their industry experience naturally in conversation
+- Tailor technical depth to their experience level
+- Don't recite their profile back to them -- use it to inform your questions
+```
+
+<Tip>
+The most effective use of social context is subtle. Instead of "I see you worked at Company X," try "Given your enterprise background, how would you approach..."
+</Tip>

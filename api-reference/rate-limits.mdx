@@ -1,0 +1,78 @@
+---
+title: 'Rate Limits'
+description: 'Session quotas, plan-based limits, and how to handle throttling.'
+---
+
+## Session Minutes
+
+Every meeting consumes session minutes from your organization's monthly quota. The limit depends on your plan:
+
+| Plan | Monthly Session Minutes |
+|------|------------------------|
+| **Basic** | Included in plan |
+| **Air** | Included in plan |
+| **Pro** | Included in plan |
+| **Max** | Included in plan |
+
+<Note>
+  Exact minute allocations depend on your subscription. Check your remaining minutes in the billing dashboard or in the `session_minutes_info` field returned when creating a meeting.
+</Note>
+
+## How Session Minutes Work
+
+- Each meeting consumes minutes based on the scenario's `call_duration` setting (default: 30 min)
+- Minutes are reserved when a meeting is created, not when it starts
+- When your quota is exhausted, meeting creation returns a `200` response with an error message:
+
+```json
+{
+  "success": false,
+  "error": "Insufficient session minutes",
+  "session_minutes_info": {
+    "estimatedMinutes": 25,
+    "remainingMinutes": 10
+  }
+}
+```
+
+## Checking Remaining Minutes
+
+The meeting creation response includes your remaining quota:
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "session_minutes_info": {
+    "estimatedMinutes": 25,
+    "remainingMinutes": 75
+  }
+}
+```
+
+## Best Practices
+
+```javascript
+async function apiCallWithRetry(url, options, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const response = await fetch(url, options);
+
+    if (response.status === 429 || response.status === 503) {
+      const waitMs = Math.pow(2, i) * 1000;
+      await new Promise(r => setTimeout(r, waitMs));
+      continue;
+    }
+
+    return response;
+  }
+  throw new Error('Request failed after retries');
+}
+```
+
+<Tip>
+  Cache persona and scenario data — it rarely changes. Fetch once and reuse rather than calling the API before every meeting.
+</Tip>
+
+## Increasing Limits
+
+Need more session minutes or higher quotas? Contact [harshit@waterr.ai](mailto:harshit@waterr.ai) for custom enterprise plans.
