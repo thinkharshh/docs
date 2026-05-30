@@ -3,30 +3,27 @@ title: "Quick Start"
 description: "Get started with WaterrAI API in minutes"
 ---
 
-## Quick Start
-
 Create a persona, scenario, and meeting in three steps. By the end, you'll have a live AI conversation room URL.
 
-### Prerequisites
+## Prerequisites
 
-- An [API secret](/api-reference/authentication) (recommended) or JWT token
-- Your `membership_id` and `org_id` from the [active workspace](/api-reference/users) endpoint
+An [API key](/api-reference/authentication) — get one from [waterr.ai/settings?tab=api-keys](https://waterr.ai/settings?tab=api-keys).
 
-```bash
-# Get your workspace info first
-curl -X GET https://waterr.ai/backend/users/active-workspace \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+Send it on every request:
+
+```
+Authorization: Bearer wai_<your_key>
 ```
 
-Save the `id` (your `membership_id`) and `org_id` from the response.
+Your workspace (`membership_id`, `org_id`) is inferred from the key — you never need to pass it in requests.
 
 ## Step 1: Create a Persona
 
 A persona defines who the AI is — name, role, personality, voice, and avatar.
 
 ```bash
-curl -X POST https://waterr.ai/backend/personas \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/personas \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sarah Chen",
@@ -71,8 +68,8 @@ curl -X POST https://waterr.ai/backend/personas \
 A scenario combines a persona with conversation instructions, goals, and settings. This is where you define *what* the conversation is about.
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "System Design Interview",
@@ -136,8 +133,8 @@ curl -X POST https://waterr.ai/backend/scenarios \
 A meeting is a live session instance. Creating one spins up a Daily.co video room with your AI persona ready to talk.
 
 ```bash
-curl -X POST https://waterr.ai/backend/meetings \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/meetings \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "person_name": "John Doe",
@@ -212,8 +209,8 @@ await call.join({
 Skip Steps 1-2 entirely. Describe what you want in plain text and the AI generates a complete scenario with persona, prompt, and goals.
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios/create-with-gpt \
+  -H "Authorization: Bearer wai_<your_key>" \
   -F 'userInput=I need a technical interview for a senior backend engineer. Focus on system design and distributed systems. 25 minutes.' \
   -F 'duration=25' \
   -F 'allow_live_vision=false' \
@@ -223,8 +220,8 @@ curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
 You can also attach a resume or job description:
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios/create-with-gpt \
+  -H "Authorization: Bearer wai_<your_key>" \
   -F 'userInput=Interview this candidate for a backend role' \
   -F 'file=@resume.pdf' \
   -F 'duration=30'
@@ -260,9 +257,9 @@ Use the returned `scenario_id` directly in Step 3 to create a meeting.
 ## Complete Example (JavaScript)
 
 ```javascript
-const API = 'https://waterr.ai/backend';
-const TOKEN = process.env.WATERR_API_TOKEN;
-const headers = { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+const API = 'https://api.waterr.ai/v1';
+const API_KEY = process.env.WATERR_API_KEY;  // wai_...
+const headers = { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' };
 
 // Option A: Full control — create persona + scenario + meeting
 async function createFullMeeting() {
@@ -312,7 +309,7 @@ async function createQuickMeeting() {
 
   const scenario = await fetch(`${API}/scenarios/create-with-gpt`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${TOKEN}` },
+    headers: { 'Authorization': `Bearer ${API_KEY}` },
     body: formData,
   }).then(r => r.json());
 

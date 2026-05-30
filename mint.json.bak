@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Waterr AI",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8",
+    "anchors": {
+      "from": "#2563EB",
+      "to": "#7C3AED"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:harshit@waterr.ai"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://meet.waterr.ai"
+  },
+  "tabs": [
+    {
+      "name": "Guides",
+      "url": "guides"
+    },
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/waterr"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/waterr-ai"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "concepts"
+      ]
+    },
+    {
+      "group": "Scenarios",
+      "pages": [
+        "scenarios/overview",
+        "scenarios/creating",
+        "scenarios/managing",
+        "scenarios/personas",
+        "scenarios/instructions"
+      ]
+    },
+    {
+      "group": "Goals & Evaluation",
+      "pages": [
+        "goals/overview",
+        "goals/creating-goals",
+        "goals/scoring"
+      ]
+    },
+    {
+      "group": "Sharing & Distribution",
+      "pages": [
+        "sharing/links",
+        "sharing/embedding",
+        "sharing/scheduling"
+      ]
+    },
+    {
+      "group": "Responses & Analytics",
+      "pages": [
+        "responses/viewing",
+        "responses/analytics",
+        "responses/export"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/get-shareable-link",
+        "guides/embed-on-website",
+        "guides/view-responses",
+        "guides/schedule-session"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/introduction",
+        "api-reference/authentication",
+        "api-reference/scenarios",
+        "api-reference/meetings",
+        "api-reference/webhooks"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/waterr_ai",
+    "linkedin": "https://linkedin.com/company/waterr-ai"
+  }
+}

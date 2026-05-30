@@ -1,68 +1,134 @@
 ---
 title: Webhooks
-description: "Configure webhook URLs to receive session results (coming soon)."
+description: "Receive a signed POST to your server when a session's analysis is ready."
 ---
 
-# Webhooks
-
-<Warning>
-  **Coming soon.** You can configure a webhook URL today, but outgoing webhook delivery is not yet active. Use [polling](/api-reference/session-lifecycle) or [email notifications](/capabilities/notifications) to get session results in the meantime.
-</Warning>
+<Note>
+  **Available today:** `session.analysis_complete`. Other events (`session.ended`,
+  `session.transcript_ready`, `recording.ready`) are not yet delivered — use
+  [polling](/api-reference/session-lifecycle) or [email notifications](/capabilities/notifications) for those.
+</Note>
 
 ## Setup
 
-Configure a webhook URL for your scenario via the **Settings** tab or the session options API:
+Configure a webhook URL for your scenario via the **Settings** tab or the session
+options API:
 
 ```bash
-curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/scenarios/{scenarioId}/session-options \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "webhook_url": "https://your-app.com/webhooks/waterr"
   }'
 ```
 
-The `webhook_url` field is stored on the scenario's session options. When webhook delivery is enabled, we will POST to this URL when sessions complete.
+Once set, every analysis that completes for a meeting on that scenario will fire
+a `session.analysis_complete` POST to your URL.
 
-## Planned Payload
+## Event payload
 
-When implemented, the webhook will POST the following payload on session completion:
+Every webhook POSTs a JSON body with this envelope:
 
 ```json
 {
-  "event": "meeting.completed",
+  "id": "9b6c…",
+  "event": "session.analysis_complete",
+  "created_at": "2026-05-31T09:25:00.000Z",
   "data": {
     "meeting_id": "meeting-uuid",
     "scenario_id": "scenario-uuid",
-    "person_name": "John Smith",
-    "duration": 1420,
-    "goals": [
-      {
-        "name": "Problem Solving",
-        "score": 90,
-        "feedback": "Demonstrated clear structured thinking..."
-      }
-    ],
-    "completed_at": "2024-01-20T09:25:00Z"
+    "analysis": {
+      "analysis_id": "analysis-uuid",
+      "average_score": 82,
+      "total_score": 412,
+      "summary": "The candidate demonstrated strong …",
+      "call_summary": "30-minute system design conversation …",
+      "strengths": "…",
+      "growth_areas": "…",
+      "recommendations": "…",
+      "goal_results": [
+        { "goal": "Problem Solving", "result": { "score": 4, "feedback": "…" } }
+      ],
+      "highlights": [
+        { "title": "Identified the bottleneck early", "timestamp": 412 }
+      ],
+      "conversation_length": 187
+    }
   }
 }
 ```
 
-## Planned Events
+The `data.analysis` object mirrors what `GET /analyses/meeting/{meetingId}` returns,
+so any code that already consumes the analysis API works unchanged.
 
-| Event | When |
-|-------|------|
-| `meeting.completed` | Session ends and analysis is ready |
+## Verifying the signature
 
-## Current Alternatives
+Every request includes a `X-Waterr-Signature` header containing an HMAC-SHA256
+of the raw request body, signed with your webhook secret.
 
-Until webhooks are active, use these approaches to get session results:
+```
+X-Waterr-Signature: sha256=4c1f8a…
+```
+
+Verify it before trusting the payload (Node.js):
+
+```js
+const crypto = require('crypto');
+
+app.post('/webhooks/waterr', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-waterr-signature'];
+  const expected =
+    'sha256=' +
+    crypto
+      .createHmac('sha256', process.env.WATERR_WEBHOOK_SECRET)
+      .update(req.body)
+      .digest('hex');
+
+  if (
+    !signature ||
+    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  ) {
+    return res.status(401).send('invalid signature');
+  }
+
+  const event = JSON.parse(req.body);
+  // ... handle event.event === 'session.analysis_complete'
+  res.sendStatus(200);
+});
+```
+
+<Warning>
+  Verify using the **raw** request body, not a re-stringified JSON object. Body
+  parsers like `express.json()` will mutate whitespace and break the HMAC.
+</Warning>
+
+## Delivery behavior
+
+- Fired once per completed analysis, fire-and-forget.
+- Timeout: **5 seconds**. Responses are not parsed — any 2xx is success.
+- **No retries** in the current MVP. If your endpoint is down when the analysis
+  completes, you'll miss that event. Until retries ship, treat the webhook as a
+  *fast path* and keep polling `GET /analyses/meeting/{meetingId}` as a backstop
+  for high-stakes flows.
+- Failures are logged on our side with the response status (or error) for debugging.
+
+## Events
+
+| Event | Status | Fires when |
+|-------|--------|------------|
+| `session.analysis_complete` | **Available** | AI analysis with goal scores is saved |
+| `session.ended`             | Planned       | Meeting ends (before analysis runs) |
+| `session.transcript_ready`  | Planned       | Full transcript is finalized |
+| `recording.ready`           | Planned       | Video recording is uploaded |
+
+## Current alternatives (for the planned events)
 
 <CardGroup cols={2}>
   <Card title="Poll for analysis" icon="rotate" href="/api-reference/session-lifecycle">
-    Check `GET /analyses/meeting/{meetingId}` every 5-10 seconds after a meeting ends.
+    For the events that don't fire yet, poll `GET /analyses/meeting/{meetingId}` every 5–10 seconds.
   </Card>
   <Card title="Email notifications" icon="envelope" href="/capabilities/notifications">
-    Add email addresses in scenario settings to receive results automatically.
+    Add email addresses in scenario settings to receive analysis results automatically.
   </Card>
 </CardGroup>

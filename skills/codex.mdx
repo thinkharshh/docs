@@ -1,0 +1,89 @@
+---
+title: "Codex Skill"
+description: "Drop the WaterrAI agent instructions into your Codex project so it knows the API, the resource model, and scopes every build before writing code."
+---
+
+## What this is
+
+WaterrAI's developer skill, packaged for [OpenAI Codex](https://openai.com/index/introducing-codex/). Codex reads an `AGENTS.md` at the project root for instructions and `@`-references prompt files for sub-tasks — so the skill ships as exactly that: an `AGENTS.md` plus a `generate-understanding` prompt.
+
+Once installed, when you ask Codex to build something on Waterr it will:
+
+1. Run `@prompts/generate-understanding.md` to interview you and produce a written scope-of-work
+2. Wait for your sign-off
+3. Implement against the canonical API docs (it cites every endpoint URL it uses)
+
+## Install
+
+Codex doesn't read the [SKILL.md](https://www.skills.sh) registry that powers the [Claude Code install](/skills/claude-code) — it uses `AGENTS.md` at the project root instead. So the install is a manual clone-and-copy from the public [`waterrai/skills`](https://github.com/waterrai/skills) repo. From the root of the project where you'll run Codex:
+
+```bash
+git clone https://github.com/waterrai/skills.git .waterr-skill
+cp -r .waterr-skill/codex/waterr/* ./
+```
+
+That drops two things into your project:
+
+| File | What Codex does with it |
+|---|---|
+| `AGENTS.md` | Loaded automatically — the always-on rules for any WaterrAI work |
+| `prompts/generate-understanding.md` | Referenced as `@prompts/generate-understanding.md` to run the scoping interview |
+
+If you already have an `AGENTS.md`, append the contents rather than overwriting. The skill's rules are scoped to "WaterrAI work" and play nicely with other project rules.
+
+To update later:
+
+```bash
+cd .waterr-skill && git pull && cp -r codex/waterr/* ../
+```
+
+## How it works
+
+### 1. You describe what you want
+
+```
+> Build a candidate screening flow on Waterr — candidates apply, take an AI
+> interview, score lands in our ATS. @prompts/generate-understanding.md
+```
+
+### 2. Codex runs the scoping interview
+
+At most three questions per round, across three rounds:
+
+- **What & why** — user-facing outcome, trigger, where results land
+- **The meeting** — persona reuse, goals, recording, language
+- **Integration shape** — sync vs async, webhooks vs polling, auth
+
+Then it writes `WATERR_BUILD_SCOPE.md` and asks you to confirm before any code is written.
+
+### 3. You approve, Codex builds
+
+The rules in `AGENTS.md` take over. Codex fetches the relevant [API reference](/api-reference/quickstart) pages, writes the integration code, and cites the docs URL next to every endpoint it calls.
+
+## What the skill knows
+
+`AGENTS.md` links Codex to the full developer docs and tells it to fetch before guessing:
+
+- [Authentication](/api-reference/authentication) — API secret vs JWT
+- [Session lifecycle](/api-reference/session-lifecycle) — create → join → end → analyze
+- [Personas](/api-reference/personas), [Scenarios](/api-reference/scenarios), [Meetings](/api-reference/meetings)
+- [Transcripts](/api-reference/transcripts), [Recordings](/api-reference/recordings), [Analyses](/api-reference/analysis)
+- [Goals](/api-reference/goals), [Voices](/api-reference/voices), [Users](/api-reference/users)
+- [Webhooks](/api-reference/webhooks), [SDKs](/api-reference/sdks)
+- [Prompting guide](/api-reference/prompting-guide), [Examples](/api-reference/examples)
+
+It also encodes the common pitfalls — `membership_id` ≠ user ID, voice IDs must come from `/voices`, analyses are async, scenarios are workspace-scoped.
+
+## Skip the scoping
+
+For one-off endpoint questions, just ask directly without `@`-referencing the prompt:
+
+```
+> Give me the curl to create a meeting from scenario abc-123.
+```
+
+`AGENTS.md` allows skipping the scoping interview for single concrete endpoint asks.
+
+## Source
+
+Everything is open and copy-pasteable: [github.com/waterrai/skills](https://github.com/waterrai/skills). PRs welcome.

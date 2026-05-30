@@ -3,6 +3,10 @@ title: 'Authentication'
 description: 'Create and manage API keys to authenticate with the WaterrAI API'
 ---
 
+<Note>
+  **Using MCP instead?** The [MCP server](/api-reference/mcp#authentication) uses browser-based OAuth, not API keys — each user signs in once from their MCP client and a session token is issued automatically. API keys (below) are for REST and server-to-server use.
+</Note>
+
 ## Get your API key
 
 The fastest way to get an API key is from the WaterrAI dashboard.
@@ -28,7 +32,7 @@ The fastest way to get an API key is from the WaterrAI dashboard.
 Send the key in the `Authorization` header on any API request:
 
 ```bash
-curl -X GET https://waterr.ai/backend/personas \
+curl -X GET https://api.waterr.ai/v1/personas \
   -H "Authorization: Bearer wai_abc123def456..."
 ```
 
@@ -76,7 +80,7 @@ The same operations are available over REST if you're automating key management 
 </ParamField>
 
 ```bash
-curl -X POST https://waterr.ai/backend/api-secrets \
+curl -X POST https://api.waterr.ai/v1/api-secrets \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Production API Key" }'
@@ -106,7 +110,7 @@ curl -X POST https://waterr.ai/backend/api-secrets \
 Returns metadata for every key on your account. The plain secret is never returned — only the prefix.
 
 ```bash
-curl -X GET https://waterr.ai/backend/api-secrets \
+curl -X GET https://api.waterr.ai/v1/api-secrets \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -131,14 +135,14 @@ curl -X GET https://waterr.ai/backend/api-secrets \
 Disable a key. Revoked keys can be reactivated later.
 
 ```bash
-curl -X POST https://waterr.ai/backend/api-secrets/1/revoke \
+curl -X POST https://api.waterr.ai/v1/api-secrets/1/revoke \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### Reactivate API key
 
 ```bash
-curl -X POST https://waterr.ai/backend/api-secrets/1/reactivate \
+curl -X POST https://api.waterr.ai/v1/api-secrets/1/reactivate \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -147,6 +151,6 @@ curl -X POST https://waterr.ai/backend/api-secrets/1/reactivate \
 Permanent — cannot be undone.
 
 ```bash
-curl -X DELETE https://waterr.ai/backend/api-secrets/1 \
+curl -X DELETE https://api.waterr.ai/v1/api-secrets/1 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```

@@ -11,8 +11,8 @@ Scenarios define conversation contexts that combine a persona with instructions,
 ## Get All Scenarios
 
 ```bash
-curl -X GET https://waterr.ai/backend/scenarios \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/scenarios \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Scenario by ID
@@ -24,8 +24,8 @@ Returns full scenario data including persona, goals, meeting controls, and sessi
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/scenarios/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/scenarios/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -69,7 +69,7 @@ curl -X GET https://waterr.ai/backend/scenarios/{id} \
 Public endpoint — no authentication required for public scenarios.
 
 ```bash
-curl -X GET https://waterr.ai/backend/scenarios/embed/{id}
+curl -X GET https://api.waterr.ai/v1/scenarios/embed/{id}
 ```
 
 <Note>
@@ -119,8 +119,8 @@ curl -X GET https://waterr.ai/backend/scenarios/embed/{id}
 </ParamField>
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "System Design Interview",
@@ -143,8 +143,8 @@ curl -X POST https://waterr.ai/backend/scenarios \
 Generate a complete scenario — persona, prompt, and goals — from a text description. Optionally attach a file (resume, job description, product brief).
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios/create-with-gpt \
+  -H "Authorization: Bearer wai_<your_key>" \
   -F 'userInput=Sales discovery call with a skeptical enterprise buyer evaluating 3 competing solutions. 20 minutes.' \
   -F 'duration=20' \
   -F 'allow_live_vision=false' \
@@ -204,8 +204,8 @@ curl -X POST https://waterr.ai/backend/scenarios/create-with-gpt \
 </ParamField>
 
 ```bash
-curl -X PUT https://waterr.ai/backend/scenarios/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/scenarios/{id} \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Advanced System Design Interview",
@@ -219,8 +219,8 @@ curl -X PUT https://waterr.ai/backend/scenarios/{id} \
 Control session behavior settings for a scenario.
 
 ```bash
-curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/scenarios/{scenarioId}/session-options \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "duration": 30,
@@ -233,8 +233,8 @@ curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
 ## Delete Scenario
 
 ```bash
-curl -X DELETE https://waterr.ai/backend/scenarios/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X DELETE https://api.waterr.ai/v1/scenarios/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Meeting Controls

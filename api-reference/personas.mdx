@@ -13,8 +13,8 @@ Personas represent AI characters with specific personality traits, backgrounds, 
 Retrieve all personas for the authenticated user.
 
 ```bash
-curl -X GET https://waterr.ai/backend/personas \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/personas \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -42,8 +42,8 @@ curl -X GET https://waterr.ai/backend/personas \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/personas/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/personas/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Create Persona
@@ -79,8 +79,8 @@ Create a new persona with specified characteristics.
 </ParamField>
 
 ```bash
-curl -X POST https://waterr.ai/backend/personas \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/personas \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sarah Chen",
@@ -113,8 +113,8 @@ curl -X POST https://waterr.ai/backend/personas \
 </ParamField>
 
 ```bash
-curl -X PUT https://waterr.ai/backend/personas/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/personas/{id} \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sarah Chen",
@@ -130,6 +130,6 @@ curl -X PUT https://waterr.ai/backend/personas/{id} \
 </ParamField>
 
 ```bash
-curl -X DELETE https://waterr.ai/backend/personas/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X DELETE https://api.waterr.ai/v1/personas/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```

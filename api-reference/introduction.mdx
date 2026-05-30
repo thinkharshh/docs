@@ -73,13 +73,32 @@ This section provides comprehensive documentation for all WaterrAI API endpoints
   </Card>
 </CardGroup>
 
+## Integrations
+
+<CardGroup cols={2}>
+  <Card
+    title="MCP Server"
+    icon="plug"
+    href="/api-reference/mcp"
+  >
+    Connect WaterrAI to Claude, ChatGPT, Cursor and other MCP-aware clients so your agent can call the Core APIs directly.
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/api-reference/webhooks"
+  >
+    Get notified when meetings end, transcripts are ready, and analyses complete.
+  </Card>
+</CardGroup>
+
 ## Authentication
 
 All API endpoints require authentication. You can use either **JWT tokens** or **API secrets**:
 
 **JWT Tokens:**
 ```bash
-Authorization: Bearer YOUR_JWT_TOKEN
+Authorization: Bearer wai_<your_key>
 ```
 
 **API Secrets (recommended for automation):**
@@ -94,7 +113,7 @@ API secrets never expire and are ideal for server-to-server communication. See t
 All API requests should be made to:
 
 ```
-https://waterr.ai/backend
+https://api.waterr.ai/v1
 ```
 
 ## Response Format

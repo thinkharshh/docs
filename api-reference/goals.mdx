@@ -13,8 +13,8 @@ Goals define the criteria the AI uses to evaluate participants after each sessio
 Retrieve all goals for the authenticated user.
 
 ```bash
-curl -X GET https://waterr.ai/backend/goals \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/goals \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -40,8 +40,8 @@ curl -X GET https://waterr.ai/backend/goals \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/goals/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/goals/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Create Goal
@@ -75,8 +75,8 @@ curl -X GET https://waterr.ai/backend/goals/{id} \
 </Note>
 
 ```bash
-curl -X POST https://waterr.ai/backend/goals \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/goals \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Technical Depth",
@@ -103,8 +103,8 @@ curl -X POST https://waterr.ai/backend/goals \
 Create multiple goals at once:
 
 ```bash
-curl -X POST https://waterr.ai/backend/goals/bulk \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/goals/bulk \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "goals": [
@@ -129,8 +129,8 @@ curl -X POST https://waterr.ai/backend/goals/bulk \
 </ParamField>
 
 ```bash
-curl -X PUT https://waterr.ai/backend/goals/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/goals/{id} \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Goal Name",
@@ -145,8 +145,8 @@ curl -X PUT https://waterr.ai/backend/goals/{id} \
 </ParamField>
 
 ```bash
-curl -X DELETE https://waterr.ai/backend/goals/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X DELETE https://api.waterr.ai/v1/goals/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Linking Goals to Scenarios
@@ -154,8 +154,8 @@ curl -X DELETE https://waterr.ai/backend/goals/{id} \
 Goals are linked to scenarios during scenario creation or update. Pass an array of goal IDs:
 
 ```bash
-curl -X POST https://waterr.ai/backend/scenarios \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/scenarios \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sales Discovery Call",

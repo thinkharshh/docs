@@ -21,8 +21,8 @@ Recordings capture the audio/video of meetings for later playback and review.
 Retrieve all recordings for the authenticated user.
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -45,8 +45,8 @@ curl -X GET https://waterr.ai/backend/recordings \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Recordings by Meeting ID
@@ -56,8 +56,8 @@ curl -X GET https://waterr.ai/backend/recordings/{id} \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings/meeting/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings/meeting/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Recording URL
@@ -69,8 +69,8 @@ Get the playback URL (CloudFront CDN) for a recording. This is the recommended e
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings/url/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings/url/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Recording URL with Thumbnail
@@ -78,8 +78,8 @@ curl -X GET https://waterr.ai/backend/recordings/url/{meetingId} \
 Same as above but also returns a thumbnail image URL for preview.
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings/url-with-thumbnail/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings/url-with-thumbnail/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Recordings by Scenario
@@ -91,8 +91,8 @@ Retrieve all recordings across meetings for a specific scenario.
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/recordings/scenario/{scenarioId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/recordings/scenario/{scenarioId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 <Tip>

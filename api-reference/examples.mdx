@@ -17,11 +17,11 @@ Build a page where candidates practice interviews and you get scored results.
 // server.js (Node.js/Express)
 const express = require('express');
 const app = express();
-const API = 'https://waterr.ai/backend';
-const TOKEN = process.env.WATERR_API_TOKEN;
+const API = 'https://api.waterr.ai/v1';
+const API_KEY = process.env.WATERR_API_KEY;  // wai_...
 
 const headers = {
-  'Authorization': `Bearer ${TOKEN}`,
+  'Authorization': `Bearer ${API_KEY}`,
   'Content-Type': 'application/json',
 };
 
@@ -94,7 +94,7 @@ import time
 import csv
 import requests
 
-API = "https://waterr.ai/backend"
+API = "https://api.waterr.ai/v1"
 TOKEN = os.environ["WATERR_API_TOKEN"]
 headers = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
@@ -188,8 +188,8 @@ app.post('/webhooks/waterr', async (req, res) => {
 ### Register the webhook
 
 ```bash
-curl -X PUT https://waterr.ai/backend/scenarios/{scenarioId}/session-options \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X PUT https://api.waterr.ai/v1/scenarios/{scenarioId}/session-options \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "webhook_url": "https://your-app.com/webhooks/waterr"

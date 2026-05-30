@@ -1,0 +1,154 @@
+/* Match Plus One Studio (react-subprocess) dark-theme palette + font.
+   Source: react-subprocess/src/design-system.css (.dark block)
+     --color-bg-primary: #2A2A2A     (main canvas)
+     --color-bg-sidebar: #222222     (sidebar — slightly darker than canvas)
+     --color-bg-hover:   rgba(255,255,255,0.06)
+     --color-text-primary: #E8E8E8
+     --color-text-muted:   #6B6B6B
+     --font-body: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif
+   Light mode left alone for now.
+*/
+
+:root {
+  --plusone-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --plusone-bg-canvas: #2a2a2a;
+  --plusone-bg-sidebar: #2a2a2a;
+  --plusone-bg-surface: #222222;
+  --plusone-bg-hover: rgba(255, 255, 255, 0.06);
+  --plusone-text-primary: #e8e8e8;
+  --plusone-text-muted: #6b6b6b;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--plusone-font) !important;
+}
+
+/* Dark mode canvas — Plus One Studio's --color-bg-primary */
+html.dark,
+html.dark body {
+  background-color: var(--plusone-bg-canvas) !important;
+  color: var(--plusone-text-primary);
+}
+
+/* Sidebar is slightly darker than canvas — matches Plus One Studio */
+html.dark aside,
+html.dark #sidebar,
+html.dark nav[aria-label*="sidebar" i] {
+  background-color: var(--plusone-bg-sidebar) !important;
+}
+
+/* Sidebar blends seamlessly with the canvas — no divider */
+html.dark aside {
+  border-right: none !important;
+}
+
+/* Kill Mintlify's top-of-sidebar dark overlay/shade.
+   Targets pseudo-elements AND wrapper divs that render their own background. */
+html.dark aside::before,
+html.dark aside::after,
+html.dark aside > div::before,
+html.dark aside > div::after,
+html.dark aside > div:first-child::before,
+html.dark aside > div:first-child::after {
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  content: none !important;
+  display: none !important;
+}
+
+html.dark aside > div:first-child,
+html.dark aside > div:first-child > div:first-child,
+html.dark aside > header,
+html.dark aside > div[class*="header" i],
+html.dark aside > div[class*="top" i],
+html.dark aside > div[class*="gradient" i],
+html.dark aside > div[class*="overlay" i] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Sidebar group labels — section header (large, bold, light) */
+html.dark aside h5,
+html.dark aside [class*="GroupLabel"],
+html.dark aside [class*="group-label"],
+html.dark nav[aria-label*="sidebar" i] h5 {
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--plusone-text-primary) !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+  padding-left: 0 !important;
+}
+
+/* Sidebar items — muted, indented, Inter */
+html.dark aside ul li a,
+html.dark nav[aria-label*="sidebar" i] ul li a {
+  padding-left: 1.25rem !important;
+  color: var(--plusone-text-muted) !important;
+  font-family: var(--plusone-font) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+}
+
+/* Hover */
+html.dark aside ul li a:hover,
+html.dark nav[aria-label*="sidebar" i] ul li a:hover {
+  background-color: var(--plusone-bg-hover) !important;
+  color: var(--plusone-text-primary) !important;
+}
+
+/* Cards, callouts, code blocks — use the same dark surface as the sidebar.
+   Mintlify default tints these with a cool/blue gray; we want a single neutral. */
+html.dark .card,
+html.dark [class*="Card"],
+html.dark [class*="card_"],
+html.dark .callout,
+html.dark [class*="Callout"],
+html.dark blockquote,
+html.dark pre,
+html.dark figure,
+html.dark [class*="Code"],
+html.dark [class*="code-block"],
+html.dark [class*="Note"],
+html.dark [class*="Tip"],
+html.dark [class*="Warning"],
+html.dark [class*="Info"] {
+  background-color: var(--plusone-bg-surface) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Inline code stays slightly elevated so it reads */
+html.dark :not(pre) > code {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Active item — kill Mintlify's blue pill, use left-border accent + bright text */
+html.dark #sidebar a[aria-current="page"],
+html.dark #sidebar a.active,
+html.dark #sidebar a[data-active="true"],
+html.dark aside a[aria-current="page"],
+html.dark aside a.active,
+html.dark aside a[data-active="true"],
+html.dark nav a[aria-current="page"],
+html.dark nav a.active,
+html.dark nav a[data-active="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-left: 2px solid var(--plusone-text-primary) !important;
+  padding-left: calc(1.25rem - 2px) !important;
+  color: var(--plusone-text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 0 !important;
+}

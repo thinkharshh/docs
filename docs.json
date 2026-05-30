@@ -10,7 +10,13 @@
   "appearance": {
     "default": "dark"
   },
-  "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "Inter",
+    "weight": 400,
+    "source": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap",
+    "format": "woff2"
+  },
+  "favicon": "/favicon.png",
   "api": {
     "openapi": [
       "openapi.yaml"
@@ -23,11 +29,14 @@
     "tabs": [
       {
         "tab": "Help Center",
+        "icon": "life-ring",
+        "pages": [
+          "introduction"
+        ],
         "groups": [
           {
             "group": "Getting Started",
             "pages": [
-              "introduction",
               "getting-started/quickstart",
               "getting-started/creating-scenarios",
               "getting-started/personas",
@@ -75,16 +84,17 @@
       },
       {
         "tab": "API Reference",
+        "icon": "code",
+        "pages": [
+          "api-reference/introduction"
+        ],
         "groups": [
           {
             "group": "Getting Started",
             "pages": [
-              "api-reference/introduction",
               "api-reference/quickstart",
               "api-reference/authentication",
-              "api-reference/session-lifecycle",
-              "api-reference/errors",
-              "api-reference/rate-limits"
+              "api-reference/session-lifecycle"
             ]
           },
           {
@@ -105,14 +115,21 @@
             "group": "Guides",
             "pages": [
               "api-reference/prompting-guide",
-              "api-reference/examples",
-              "api-reference/sdks"
+              "api-reference/examples"
             ]
           },
           {
             "group": "Integrations",
             "pages": [
+              "api-reference/mcp",
               "api-reference/webhooks"
+            ]
+          },
+          {
+            "group": "Agent Skills",
+            "pages": [
+              "skills/claude-code",
+              "skills/codex"
             ]
           },
           {
@@ -194,38 +211,18 @@
         ]
       }
     ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Community",
-          "href": "https://discord.gg/waterr",
-          "icon": "discord"
-        },
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/waterr-ai",
-          "icon": "github"
-        }
-      ]
-    }
+    "global": {}
   },
   "logo": {
-    "light": "/logo/waterr-light.png",
-    "dark": "/logo/waterr-dark.png"
+    "light": "/logo/header-logo-light.png",
+    "dark": "/logo/header-logo-dark.png",
+    "href": "https://waterr.ai"
   },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:harshit@waterr.ai"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://meet.waterr.ai"
-    }
+  "styling": {
+    "logoHeight": 64,
+    "css": "/style.css"
   },
+  "navbar": {},
   "footer": {
     "socials": {
       "x": "https://x.com/waterr_ai",

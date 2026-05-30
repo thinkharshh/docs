@@ -19,8 +19,8 @@ Transcripts provide a structured record of meeting conversations.
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/sentenced-transcripts/scenario/456 \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/sentenced-transcripts/scenario/456 \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -72,8 +72,8 @@ curl -X GET https://waterr.ai/backend/sentenced-transcripts/scenario/456 \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/sentenced-transcripts/301/789/456 \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/sentenced-transcripts/301/789/456 \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -106,8 +106,8 @@ curl -X GET https://waterr.ai/backend/sentenced-transcripts/301/789/456 \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/transcripts/meeting/789 \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/transcripts/meeting/789 \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json

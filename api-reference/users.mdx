@@ -6,19 +6,19 @@ openapi: 'GET /users/{userId}'
 
 ## Overview
 
-The Users API provides endpoints to retrieve user workspace information. The most important endpoint is **Get Active Workspace**, which returns your membership ID required for creating meetings and other API calls.
+The Users API returns the workspace details associated with your API key — useful when you need to display the active org/role in your UI, or when you're building a multi-tenant integration where users connect different WaterrAI workspaces.
 
-<Warning>
-  **Pre-Setup Required:** Before creating meetings or using other organization-scoped APIs, you must first retrieve your active workspace to get your `membership_id`.
-</Warning>
+<Note>
+  You **don't** need to fetch this before calling other endpoints. Your `membership_id` and `org_id` are inferred from your API key on every request — meetings, scenarios, personas, etc. are created in the right workspace automatically.
+</Note>
 
 ## Get Active Workspace
 
-Retrieve the current user's active workspace and membership information.
+Retrieve the workspace and membership context attached to your API key.
 
 ```bash
-curl -X GET https://waterr.ai/backend/users/active-workspace \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/users/active-workspace \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -45,55 +45,12 @@ curl -X GET https://waterr.ai/backend/users/active-workspace \
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | integer | **The membership ID** -- use this for creating meetings and other APIs |
+| `id` | string (UUID) | The membership ID for this workspace |
 | `type` | string | Membership type: `creator` or `end_user` |
-| `org_id` | integer | Organization ID the user belongs to |
-| `role` | string | User's role in the organization |
+| `org_id` | string (UUID) | Organization ID the workspace belongs to |
+| `role` | string | Your role in the organization |
 | `active` | boolean | Whether this membership is currently active |
 | `Organization` | object | Organization details including name |
-
-<Note>
-  Save the `id` value from the response -- this is your `membership_id` that you'll need for creating meetings and other organization-scoped operations.
-</Note>
-
-## Usage Example
-
-Here's a complete flow showing how to get your membership ID before creating a meeting:
-
-```javascript
-const API_BASE = 'https://waterr.ai/backend';
-const API_TOKEN = 'YOUR_API_TOKEN';
-
-async function createMeetingWithWorkspace() {
-  // Step 1: Get active workspace
-  const workspace = await fetch(`${API_BASE}/users/active-workspace`, {
-    headers: { 'Authorization': `Bearer ${API_TOKEN}` }
-  }).then(r => r.json());
-
-  const membershipId = workspace.data.id;
-
-  // Step 2: Create a meeting
-  const meeting = await fetch(`${API_BASE}/meetings`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_TOKEN}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      person_name: "John Doe",
-      scenario_id: 456,
-      meeting_type: "regular",
-      membership_id: membershipId
-    })
-  }).then(r => r.json());
-
-  console.log('Meeting created:', meeting.data);
-}
-```
-
-<Tip>
-  Cache the membership ID after the first call -- it typically doesn't change unless the user switches organizations.
-</Tip>
 
 ## Get User by ID
 
@@ -104,7 +61,7 @@ Retrieve a user's public profile by their user ID. No authentication required.
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/users/{userId}
+curl -X GET https://api.waterr.ai/v1/users/{userId}
 ```
 
 ## Get User by Username
@@ -116,5 +73,5 @@ Look up a user by their username. No authentication required. Useful for buildin
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/users/username/{username}
+curl -X GET https://api.waterr.ai/v1/users/username/{username}
 ```

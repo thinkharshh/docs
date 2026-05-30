@@ -19,8 +19,8 @@ Analysis provides detailed insights about a meeting, including performance metri
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/analyses/meeting/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/analyses/meeting/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -63,8 +63,8 @@ curl -X GET https://waterr.ai/backend/analyses/meeting/{meetingId} \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/analyses/{id} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/analyses/{id} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get All Analyses
@@ -72,8 +72,8 @@ curl -X GET https://waterr.ai/backend/analyses/{id} \
 Retrieve all analyses for the authenticated user.
 
 ```bash
-curl -X GET https://waterr.ai/backend/analyses \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/analyses \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Get Analyses by Scenario
@@ -85,8 +85,8 @@ Retrieve all analyses for meetings conducted with a specific scenario.
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/analyses/scenario/{scenarioId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/analyses/scenario/{scenarioId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ```json
@@ -115,8 +115,8 @@ Re-run analysis for a meeting that has already ended. Useful if the original ana
 </ParamField>
 
 ```bash
-curl -X POST https://waterr.ai/backend/analyses/trigger/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X POST https://api.waterr.ai/v1/analyses/trigger/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ## Highlights
@@ -130,8 +130,8 @@ Highlights are key moments extracted from the analysis — notable quotes, turni
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/highlights/analysis/{analysisId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/highlights/analysis/{analysisId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ### Get Highlights by Meeting
@@ -141,8 +141,8 @@ curl -X GET https://waterr.ai/backend/highlights/analysis/{analysisId} \
 </ParamField>
 
 ```bash
-curl -X GET https://waterr.ai/backend/highlights/meeting/{meetingId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X GET https://api.waterr.ai/v1/highlights/meeting/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ### Generate Highlights
@@ -150,8 +150,8 @@ curl -X GET https://waterr.ai/backend/highlights/meeting/{meetingId} \
 Trigger highlight generation for an existing analysis.
 
 ```bash
-curl -X POST https://waterr.ai/backend/highlights/generate/{analysisId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X POST https://api.waterr.ai/v1/highlights/generate/{analysisId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```
 
 ### Delete Highlights
@@ -159,6 +159,6 @@ curl -X POST https://waterr.ai/backend/highlights/generate/{analysisId} \
 Remove all highlights for an analysis.
 
 ```bash
-curl -X DELETE https://waterr.ai/backend/highlights/analysis/{analysisId} \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X DELETE https://api.waterr.ai/v1/highlights/analysis/{analysisId} \
+  -H "Authorization: Bearer wai_<your_key>"
 ```

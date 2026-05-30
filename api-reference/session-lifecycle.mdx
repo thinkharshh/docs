@@ -77,7 +77,7 @@ After a meeting ends, analysis takes 30-60 seconds to generate. Poll for it:
 async function waitForAnalysis(meetingId, maxAttempts = 10) {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await fetch(
-      `https://waterr.ai/backend/analyses/meeting/${meetingId}`,
+      `https://api.waterr.ai/v1/analyses/meeting/${meetingId}`,
       { headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
     );
 
@@ -109,6 +109,6 @@ Once analysis is ready, fetch all session data:
 To end a meeting from your server (e.g., time limit reached):
 
 ```bash
-curl -X PUT https://waterr.ai/backend/meetings/{meetingId}/end \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl -X PUT https://api.waterr.ai/v1/meetings/{meetingId}/end \
+  -H "Authorization: Bearer wai_<your_key>"
 ```

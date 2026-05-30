@@ -1,0 +1,232 @@
+---
+title: "MCP Server"
+description: "Connect WaterrAI to Claude, ChatGPT, Cursor and other MCP-aware clients so your agent can create meetings, fetch transcripts, and run analyses on your behalf."
+---
+
+{/* TODO: replace SERVER_URL, OAUTH_CLIENT_ID, RATE_LIMIT, and the Tools table rows once the MCP server is finalized. */}
+
+## Overview
+
+The WaterrAI MCP server is a hosted [Model Context Protocol](https://modelcontextprotocol.io) endpoint that exposes the Core APIs as agent-callable tools. Once you connect it to an MCP-aware client (Claude Desktop, Claude Code, ChatGPT, Cursor, Codex), your agent can do things like:
+
+- *"Create a 25-minute system-design interview scenario and a meeting for John."*
+- *"Pull the transcript and analysis from yesterday's onboarding session."*
+- *"List my scenarios and tell me which ones haven't been used in 30 days."*
+
+When to use the MCP server vs. the alternatives:
+
+- **MCP** — interactive use from an agent client, on your own account, via browser OAuth.
+- **[REST API](/api-reference/quickstart)** — server-to-server automation, CI jobs, anything non-interactive. Uses a long-lived `wai_` key.
+- **[Claude Code skill](/skills/claude-code)** — for *building* on top of the API. The skill teaches the agent the resource model; MCP lets the agent *call* the API live.
+
+## Prerequisites
+
+<Steps>
+  <Step title="A WaterrAI account">
+    Sign in at [waterr.ai](https://waterr.ai) with Google, Microsoft, or LinkedIn. The MCP server authenticates the same account — there is no separate signup.
+  </Step>
+  <Step title="An MCP-compatible client">
+    Claude Desktop, Claude Code, ChatGPT (Desktop, MCP-enabled workspace), Cursor, Codex CLI, or any client that speaks the MCP HTTP transport.
+  </Step>
+  <Step title="Plan tier">
+    {/* TODO: confirm plan gating once finalized. */}
+    Available on all plans. Some tools (e.g. bulk export, organization-wide reads) are limited to paid tiers — see the [Tools](#tools) table for per-tool restrictions.
+  </Step>
+</Steps>
+
+## How to connect
+
+All clients connect to the same endpoint:
+
+```
+SERVER_URL
+```
+
+You'll be sent through a browser-based OAuth flow on first connection — sign in with your WaterrAI account and approve the requested scopes. The client stores the resulting token; you won't be asked again unless you revoke it.
+
+<AccordionGroup>
+  <Accordion title="Claude Desktop">
+    <Steps>
+      <Step title="Open Settings → Connectors">
+        In Claude Desktop, open **Settings** (⌘,) and select the **Connectors** tab.
+      </Step>
+      <Step title="Add a custom connector">
+        Click **Add custom connector**, paste the server URL, and give it a name (`WaterrAI`).
+
+        ```
+        SERVER_URL
+        ```
+      </Step>
+      <Step title="Sign in">
+        A browser window opens — sign in to WaterrAI and approve access. Claude Desktop confirms the connection once OAuth completes.
+      </Step>
+      <Step title="Verify">
+        Start a new chat and ask *"What WaterrAI tools do you have?"* — Claude should list the tools from the [Tools](#tools) section.
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="Claude Code">
+    <Steps>
+      <Step title="Add the MCP server">
+        Run from any shell:
+
+        ```bash
+        claude mcp add waterr --transport http SERVER_URL
+        ```
+      </Step>
+      <Step title="Authorize">
+        On first use, Claude Code opens a browser to complete OAuth. Approve and you're done.
+      </Step>
+      <Step title="Verify">
+        ```bash
+        claude mcp list
+        ```
+        `waterr` should appear with status `connected`.
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="ChatGPT">
+    <Steps>
+      <Step title="Open Settings → Connectors">
+        Available on plans with MCP connector support. Open **Settings → Connectors → Add**.
+      </Step>
+      <Step title="Add a custom MCP server">
+        Paste the URL and name it `WaterrAI`.
+
+        ```
+        SERVER_URL
+        ```
+      </Step>
+      <Step title="Sign in">
+        Complete the OAuth flow in the popup, then enable the connector for your workspace.
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="Cursor">
+    Add to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "waterr": {
+          "url": "SERVER_URL"
+        }
+      }
+    }
+    ```
+
+    Restart Cursor. The first agent invocation that calls a `waterr` tool opens the OAuth browser flow.
+  </Accordion>
+
+  <Accordion title="Codex CLI">
+    Add to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.waterr]
+    url = "SERVER_URL"
+    transport = "http"
+    ```
+
+    Run any Codex command — OAuth completes in the browser on first use.
+  </Accordion>
+
+  <Accordion title="Other MCP clients">
+    Any client that supports the MCP HTTP transport with OAuth can connect using:
+
+    - **URL:** `SERVER_URL`
+    - **Transport:** `http` (streamable)
+    - **Auth:** OAuth 2.1 with PKCE (Dynamic Client Registration supported)
+
+    Refer to your client's MCP documentation for the exact config syntax.
+  </Accordion>
+</AccordionGroup>
+
+## Authentication
+
+The MCP server uses **browser-based OAuth only** — there is no API-key or service-account path. Each user authenticates individually, and the resulting token is scoped to that user's workspace.
+
+<Note>
+  Need to script against WaterrAI from a CI job or backend service? Use the [REST API with a `wai_` key](/api-reference/authentication) instead — MCP requires an interactive browser sign-in.
+</Note>
+
+Tokens refresh automatically. To disconnect, remove the connector from your client and (optionally) revoke the session at [waterr.ai/settings?tab=connections](https://waterr.ai/settings?tab=connections).
+
+## Tools
+
+Each tool maps to a REST endpoint — click through for the full request/response schema.
+
+| Tool | Description | Example prompt |
+| --- | --- | --- |
+| [`list_scenarios`](/api-reference/endpoint/get-scenarios) | List scenarios in your active workspace. | *"Show me my interview scenarios."* |
+| [`create_meeting`](/api-reference/endpoint/post-meetings) | Spin up a live meeting from a scenario, returning a join URL. | *"Create a meeting from the System Design scenario for John."* |
+| [`get_meeting`](/api-reference/endpoint/get-meetings-id) | Fetch a meeting's status, participants, and URLs. | *"What's the status of meeting abc123?"* |
+| [`get_analysis`](/api-reference/endpoint/get-analyses-meeting-meetingid) | Return scored goals + summary for a completed meeting. | *"How did the candidate score in yesterday's interview?"* |
+| [`list_voices`](/api-reference/endpoint/get-voices) | List available voices for personas. | *"What female voices can I assign to a persona?"* |
+
+{/* TODO: extend with the full hand-curated tool list once finalized. Suggested next adds: list_meetings, create_scenario, get_transcript, list_personas, create_persona, list_goals. */}
+
+## Limits and permissions
+
+- **Rate limit:** `RATE_LIMIT` per token (responses include `X-RateLimit-*` headers, same as REST).
+- **Workspace scope:** the MCP follows your **active workspace**. To act in a different workspace, switch it in [waterr.ai/settings](https://waterr.ai/settings) and reconnect.
+- **Destructive tools:** `delete_*` tools (when enabled) act immediately and irreversibly. Most clients let you require confirmation per-tool — turn this on for anything destructive.
+
+<Warning>
+  Treat your MCP-connected agent like a logged-in user. Anything you can do in the dashboard, an agent with the right tool can do too — including ending meetings or deleting scenarios.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="OAuth popup didn't open / was blocked">
+    Allow popups for your client's origin, then retry the connect step. In Claude Desktop and Cursor, removing and re-adding the connector triggers a fresh OAuth attempt.
+  </Accordion>
+
+  <Accordion title="Tools aren't showing up in my client">
+    Most clients only refresh their tool list on startup. Quit and reopen the client after adding the connector. In Claude Code, run `claude mcp list` to confirm `waterr` is `connected`.
+  </Accordion>
+
+  <Accordion title="401 Unauthorized after working fine for a while">
+    Your refresh token may have been revoked (password change, session timeout, manual revoke). Remove and re-add the connector to redo OAuth.
+  </Accordion>
+
+  <Accordion title="Rate-limit errors (429)">
+    The response includes `Retry-After` (seconds). Back off and retry. If you regularly hit limits from an agent, batch operations through a single tool call where possible (e.g. `list_meetings` instead of N × `get_meeting`).
+  </Accordion>
+
+  <Accordion title="Tool returns 'workspace not found'">
+    The MCP token is bound to the workspace that was active at sign-in. Switch workspace at [waterr.ai/settings](https://waterr.ai/settings), then remove + re-add the connector.
+  </Accordion>
+</AccordionGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Does the MCP server use my REST API key?">
+    No. MCP uses OAuth exclusively. Your `wai_` REST keys and your MCP session are independent — revoking one doesn't affect the other.
+  </Accordion>
+
+  <Accordion title="Can I use the MCP server from a CI job or backend?">
+    No — OAuth requires an interactive browser sign-in. Use the [REST API with a `wai_` key](/api-reference/authentication) for non-interactive workloads.
+  </Accordion>
+
+  <Accordion title="Which plan do I need?">
+    {/* TODO: confirm plan gating. */}
+    The MCP server is available on all plans. Some individual tools are paid-plan only — see the [Tools](#tools) table.
+  </Accordion>
+
+  <Accordion title="Does my meeting data leave WaterrAI?">
+    The MCP server runs on WaterrAI infrastructure. Only the explicit tool responses your agent requests are returned to the client — transcripts, recordings, and analyses are not pre-shared.
+  </Accordion>
+
+  <Accordion title="Can I limit what tools an agent can call?">
+    Most clients support per-tool allowlists (Claude Desktop's connector settings, Cursor's MCP config). Use this to disable destructive tools for less-trusted agents.
+  </Accordion>
+
+  <Accordion title="Can I run my own MCP server against the REST API?">
+    Yes — the [REST API](/api-reference/quickstart) is the canonical surface and you're welcome to wrap it in a custom MCP server. The hosted one is the supported turnkey path.
+  </Accordion>
+</AccordionGroup>

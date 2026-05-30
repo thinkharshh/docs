@@ -187,8 +187,8 @@ Your dashboard has been showing incorrect data for 3 days and it's affecting you
 You can inject session-specific context when creating a meeting without changing the scenario prompt:
 
 ```bash
-curl -X POST https://waterr.ai/backend/meetings \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
+curl -X POST https://api.waterr.ai/v1/meetings \
+  -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
     "person_name": "Jane Smith",

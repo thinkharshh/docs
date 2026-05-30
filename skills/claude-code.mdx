@@ -1,0 +1,98 @@
+---
+title: "Claude Code Skill"
+description: "Install the WaterrAI skill into Claude Code with one command so your agent knows the API, the resource model, and scopes every build before writing code."
+---
+
+## What this is
+
+A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill — listed on [skills.sh](https://www.skills.sh/waterrai/skills) — that teaches your local Claude agent to build on top of WaterrAI. Once installed, asking Claude things like *"build a candidate screening flow on Waterr"* or *"create a meeting and pull the analysis"* will trigger the skill — which then:
+
+1. Runs the companion **`waterr-generate-understanding`** skill to interview you and produce a written scope-of-work
+2. Waits for your sign-off
+3. Implements against the canonical API docs (it cites every endpoint URL it uses)
+
+The skill is the same docs you're reading right now, packaged for the agent.
+
+## Install
+
+One command (works for Claude Code, Cursor, Windsurf, Copilot — any [SKILL.md](https://www.skills.sh)-compatible agent):
+
+```bash
+npx skills add waterrai/skills
+```
+
+That installs both skills:
+
+| Skill | Triggered when |
+|---|---|
+| `waterr` | You mention building, integrating, automating, or working with WaterrAI |
+| `waterr-generate-understanding` | Invoked by `waterr` at the start of any non-trivial build |
+
+Install just one if you prefer:
+
+```bash
+npx skills add waterrai/skills --skill waterr
+npx skills add waterrai/skills --skill waterr-generate-understanding
+```
+
+### Manual install (advanced)
+
+If you'd rather manage the files yourself, clone the repo into your Claude Code skills directory:
+
+```bash
+git clone https://github.com/waterrai/skills.git ~/.claude/skills/waterrai
+```
+
+Update later with `cd ~/.claude/skills/waterrai && git pull`.
+
+## How it works
+
+### 1. You describe what you want
+
+```
+> I want candidates to take an AI screening interview when they apply,
+> and have the score land in our ATS.
+```
+
+### 2. Claude runs `waterr-generate-understanding` first
+
+It asks at most three questions per round, across three rounds:
+
+- **What & why** — user-facing outcome, trigger, where results land
+- **The meeting** — persona reuse vs per-session, goals, recording, language
+- **Integration shape** — sync vs async, webhooks vs polling, auth model
+
+Then it writes `WATERR_BUILD_SCOPE.md` to your project root and asks you to confirm before any code is written.
+
+### 3. You approve, Claude builds
+
+The `waterr` skill takes over. It fetches the relevant [API reference](/api-reference/quickstart) pages, writes the integration code, and cites the docs URL next to every endpoint it calls.
+
+## What the skill knows
+
+The skill links to — and tells Claude to fetch before guessing — the full developer docs:
+
+- [Authentication](/api-reference/authentication) — API secret vs JWT
+- [Session lifecycle](/api-reference/session-lifecycle) — create → join → end → analyze
+- [Personas](/api-reference/personas), [Scenarios](/api-reference/scenarios), [Meetings](/api-reference/meetings)
+- [Transcripts](/api-reference/transcripts), [Recordings](/api-reference/recordings), [Analyses](/api-reference/analysis)
+- [Goals](/api-reference/goals), [Voices](/api-reference/voices), [Users](/api-reference/users)
+- [Webhooks](/api-reference/webhooks), [SDKs](/api-reference/sdks)
+- [Prompting guide](/api-reference/prompting-guide) for persona/scenario authoring
+- [Worked examples](/api-reference/examples)
+
+It also encodes the common pitfalls — `membership_id` ≠ user ID, voice IDs must come from `/voices`, analyses are async, scenarios are workspace-scoped.
+
+## Skip the scoping
+
+If you already know exactly what you want, just tell Claude:
+
+```
+> Skip scoping. Give me the curl to create a meeting from scenario abc-123.
+```
+
+The skill will jump straight to implementation for single-endpoint asks.
+
+## Source
+
+Open source, MIT-licensed: [github.com/waterrai/skills](https://github.com/waterrai/skills). PRs welcome.
