@@ -1,156 +1,84 @@
 ---
 title: 'Introduction'
-description: 'Complete API reference for WaterrAI endpoints'
+description: 'Build AI meetings programmatically with the WaterrAI API.'
 ---
 
-## Welcome to the API Reference
+The WaterrAI API lets you spin up live AI video meetings, embed them in your product, and pull back transcripts and analysis when the meeting ends.
 
-This section provides comprehensive documentation for all WaterrAI API endpoints.
-
-## Pre-Setup
-
-<CardGroup cols={1}>
-  <Card
-    title="Users (Active Workspace)"
-    icon="building"
-    href="/api-reference/users"
-  >
-    **Start here!** Get your active workspace and membership ID required for creating meetings and other APIs
-  </Card>
-</CardGroup>
+The fastest way to get started is the [Quick Start](/api-reference/quickstart) — two calls and you have a live meeting room.
 
 ## Core APIs
 
 <CardGroup cols={2}>
-  <Card
-    title="Personas"
-    icon="user"
-    href="/api-reference/personas"
-  >
-    Manage AI personas with personality traits and voice characteristics
+  <Card title="Meetings" icon="video" href="/api-reference/meetings">
+    Create a meeting from a `scenario_id` and get back a join URL.
   </Card>
-  <Card
-    title="Scenarios"
-    icon="diagram-project"
-    href="/api-reference/scenarios"
-  >
-    Create and manage conversation scenarios with embed support
+  <Card title="Personas" icon="user" href="/api-reference/personas">
+    Define the AI character — name, role, demeanor, voice.
   </Card>
-  <Card
-    title="Meetings"
-    icon="video"
-    href="/api-reference/meetings"
-  >
-    Create meetings from scenarios and manage meeting sessions
+  <Card title="Scenarios" icon="diagram-project" href="/api-reference/scenarios">
+    Combine a persona with a script and goals. Two are auto-seeded for every account.
   </Card>
-  <Card
-    title="Analysis"
-    icon="chart-line"
-    href="/api-reference/analysis"
-  >
-    Get analysis results for meetings and scenarios
-  </Card>
-  <Card
-    title="Recordings"
-    icon="video"
-    href="/api-reference/recordings"
-  >
-    Access meeting recordings for playback and review
-  </Card>
-  <Card
-    title="Transcripts"
-    icon="file-lines"
-    href="/api-reference/transcripts"
-  >
-    Access meeting transcripts (sentence transcripts recommended)
-  </Card>
-  <Card
-    title="API Secrets"
-    icon="key"
-    href="/api-reference/api-secrets"
-  >
-    Create and manage API secrets for secure authentication
+  <Card title="Post-Meeting Data" icon="chart-line" href="/api-reference/post-meeting">
+    Summary, transcript, and goal scores — all in one call.
   </Card>
 </CardGroup>
 
 ## Integrations
 
 <CardGroup cols={2}>
-  <Card
-    title="MCP Server"
-    icon="plug"
-    href="/api-reference/mcp"
-  >
-    Connect WaterrAI to Claude, ChatGPT, Cursor and other MCP-aware clients so your agent can call the Core APIs directly.
+  <Card title="MCP Server" icon="plug" href="/api-reference/mcp">
+    Plug WaterrAI into Claude, ChatGPT, Cursor, and other MCP-aware clients.
   </Card>
-  <Card
-    title="Webhooks"
-    icon="webhook"
-    href="/api-reference/webhooks"
-  >
-    Get notified when meetings end, transcripts are ready, and analyses complete.
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks">
+    Get notified the moment meetings end and analyses complete.
   </Card>
 </CardGroup>
 
 ## Authentication
 
-All API endpoints require authentication. You can use either **JWT tokens** or **API secrets**:
+Send your API key on every request:
 
-**JWT Tokens:**
-```bash
+```
 Authorization: Bearer wai_<your_key>
 ```
 
-**API Secrets (recommended for automation):**
-```bash
-Authorization: Bearer wai_abc123def456...
-```
-
-API secrets never expire and are ideal for server-to-server communication. See the [API Secrets documentation](/api-reference/api-secrets) for details.
+Get a key at [waterr.ai/settings?tab=api-keys](https://waterr.ai/settings?tab=api-keys). Full details in [Authentication](/api-reference/authentication).
 
 ## Base URL
-
-All API requests should be made to:
 
 ```
 https://api.waterr.ai/v1
 ```
 
-## Response Format
+## Response format
 
-Most API responses follow this format:
+Most endpoints return:
 
-**Success Response:**
 ```json
-{
-  "status": "success",
-  "data": { ... }
-}
+{ "status": "success", "data": { ... } }
 ```
 
-Some endpoints (users, meetings) use an alternate format:
+A few (users, meetings) return:
+
 ```json
-{
-  "success": true,
-  "data": { ... }
-}
+{ "success": true, "data": { ... } }
 ```
 
-**Error Response:**
+Errors:
+
 ```json
-{
-  "status": "error",
-  "message": "Error description"
-}
+{ "status": "error", "message": "Error description" }
 ```
 
-## Rate Limits
+## Rate limits
 
-API rate limits are applied per API token. Check response headers for current rate limit information:
-- `X-RateLimit-Limit`: Maximum requests allowed
-- `X-RateLimit-Remaining`: Remaining requests in current window
-- `X-RateLimit-Reset`: Time when the rate limit resets
+Rate limits are applied per API key. Check the response headers:
+
+- `X-RateLimit-Limit` — max requests in window
+- `X-RateLimit-Remaining` — requests left in window
+- `X-RateLimit-Reset` — when the window resets
 
 <Tip>
-  **Getting Started?** Check out our [quickstart guide](/getting-started/quickstart) to create your first scenario in minutes, or the [API quickstart](/api-reference/quickstart) for a code-first walkthrough.
+  New here? Start with the [Quick Start](/api-reference/quickstart) — you'll have a live AI meeting URL in two API calls.
 </Tip>

@@ -5,7 +5,7 @@
 
 Agent skills that teach AI coding agents — [Claude Code](https://docs.claude.com/en/docs/claude-code), Cursor, Windsurf, GitHub Copilot, [OpenAI Codex](https://openai.com/index/introducing-codex/) — how to build on the [WaterrAI](https://waterr.ai) platform: personas, scenarios, meetings, transcripts, analyses.
 
-Each skill bundles the canonical [WaterrAI developer docs](https://docs.waterr.ai/api-reference/quickstart) as reference material and includes a scope-of-work gate that forces a written spec **before** any code is written.
+The skill bundles the canonical [WaterrAI developer docs](https://docs.waterr.ai/api-reference/quickstart) as reference material and includes an internal scope-of-work gate that forces a written spec **before** any code is written.
 
 ## Install
 
@@ -15,19 +15,11 @@ Each skill bundles the canonical [WaterrAI developer docs](https://docs.waterr.a
 npx skills add waterrai/skills
 ```
 
-That installs both skills in one shot:
+That's it — one skill installed:
 
 | Skill | What it does |
 |---|---|
-| **`waterr`** | Loads on any "build/integrate/automate on WaterrAI" request. Knows the full API surface, the resource model, and the standard build sequence. Cites docs URLs beside every endpoint it uses. |
-| **`waterr-generate-understanding`** | 3-round scoping interview. Writes `WATERR_BUILD_SCOPE.md` to your project root and **stops, waiting for sign-off**, before any code is written. |
-
-Install just one if you prefer:
-
-```bash
-npx skills add waterrai/skills --skill waterr
-npx skills add waterrai/skills --skill waterr-generate-understanding
-```
+| **`waterr-api`** | Loads on any "build/integrate/automate on WaterrAI" request. Knows the full API surface, the resource model, and the standard build sequence. Cites docs URLs beside every endpoint it uses. Internally invokes a `generate-understanding` sub-skill that runs a 3-round scoping interview and writes `WATERR_BUILD_SCOPE.md` to your project root, then **stops, waiting for sign-off**, before any code is written. |
 
 ### Codex (manual install — not in the SKILL.md registry)
 
@@ -63,14 +55,17 @@ For one-off questions, skip the scoping:
 
 ```
 skills/
-├── waterr/SKILL.md                          # The developer skill
-└── waterr-generate-understanding/SKILL.md   # The scoping gate
+└── waterr-api/
+    ├── SKILL.md                                  # The user-facing skill
+    └── skills/
+        └── generate-understanding/
+            └── SKILL.md                          # Internal scoping sub-skill (not listed separately)
 codex/waterr/
-├── AGENTS.md                                # Codex equivalent of waterr
-└── prompts/generate-understanding.md        # Codex equivalent of the gate
+├── AGENTS.md                                     # Codex equivalent of waterr-api
+└── prompts/generate-understanding.md             # Codex equivalent of the scoping gate
 ```
 
-## What the skills know
+## What the skill knows
 
 The full WaterrAI API surface — fetched live from the docs at use time rather than duplicated here:
 

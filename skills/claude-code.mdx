@@ -7,7 +7,7 @@ description: "Install the WaterrAI skill into Claude Code with one command so yo
 
 A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill — listed on [skills.sh](https://www.skills.sh/waterrai/skills) — that teaches your local Claude agent to build on top of WaterrAI. Once installed, asking Claude things like *"build a candidate screening flow on Waterr"* or *"create a meeting and pull the analysis"* will trigger the skill — which then:
 
-1. Runs the companion **`waterr-generate-understanding`** skill to interview you and produce a written scope-of-work
+1. Internally runs a `generate-understanding` sub-skill to interview you and produce a written scope-of-work
 2. Waits for your sign-off
 3. Implements against the canonical API docs (it cites every endpoint URL it uses)
 
@@ -21,19 +21,7 @@ One command (works for Claude Code, Cursor, Windsurf, Copilot — any [SKILL.md]
 npx skills add waterrai/skills
 ```
 
-That installs both skills:
-
-| Skill | Triggered when |
-|---|---|
-| `waterr` | You mention building, integrating, automating, or working with WaterrAI |
-| `waterr-generate-understanding` | Invoked by `waterr` at the start of any non-trivial build |
-
-Install just one if you prefer:
-
-```bash
-npx skills add waterrai/skills --skill waterr
-npx skills add waterrai/skills --skill waterr-generate-understanding
-```
+That installs the **`waterr-api`** skill. It loads on any "build/integrate/automate on WaterrAI" request and internally invokes the bundled `generate-understanding` sub-skill at the start of any non-trivial build — you never have to install or invoke the sub-skill yourself.
 
 ### Manual install (advanced)
 
@@ -54,7 +42,7 @@ Update later with `cd ~/.claude/skills/waterrai && git pull`.
 > and have the score land in our ATS.
 ```
 
-### 2. Claude runs `waterr-generate-understanding` first
+### 2. Claude runs the `generate-understanding` sub-skill first
 
 It asks at most three questions per round, across three rounds:
 
@@ -66,7 +54,7 @@ Then it writes `WATERR_BUILD_SCOPE.md` to your project root and asks you to conf
 
 ### 3. You approve, Claude builds
 
-The `waterr` skill takes over. It fetches the relevant [API reference](/api-reference/quickstart) pages, writes the integration code, and cites the docs URL next to every endpoint it calls.
+Control returns to the parent `waterr-api` skill. It fetches the relevant [API reference](/api-reference/quickstart) pages, writes the integration code, and cites the docs URL next to every endpoint it calls.
 
 ## What the skill knows
 
@@ -75,7 +63,7 @@ The skill links to — and tells Claude to fetch before guessing — the full de
 - [Authentication](/api-reference/authentication) — API secret vs JWT
 - [Session lifecycle](/api-reference/session-lifecycle) — create → join → end → analyze
 - [Personas](/api-reference/personas), [Scenarios](/api-reference/scenarios), [Meetings](/api-reference/meetings)
-- [Transcripts](/api-reference/transcripts), [Recordings](/api-reference/recordings), [Analyses](/api-reference/analysis)
+- [Post-Meeting Data](/api-reference/post-meeting) — transcript, recording, and analysis in one call
 - [Goals](/api-reference/goals), [Voices](/api-reference/voices), [Users](/api-reference/users)
 - [Webhooks](/api-reference/webhooks), [SDKs](/api-reference/sdks)
 - [Prompting guide](/api-reference/prompting-guide) for persona/scenario authoring

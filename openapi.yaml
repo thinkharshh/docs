@@ -529,13 +529,14 @@ paths:
               type: object
               required:
                 - person_name
+                - scenario_id
               properties:
                 person_name:
                   type: string
                   description: Name of the participant joining the session.
                 scenario_id:
                   type: string
-                  description: UUID of the scenario to use.
+                  description: UUID of the scenario to use. The scenario must exist or the request is rejected with 404.
                 voice_id:
                   type: string
                   description: Optional override for the persona's voice.
@@ -661,18 +662,21 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - ended_at
               properties:
-                duration_seconds:
-                  type: integer
-                  description: Client-reported session duration in seconds. Server reconciles with server-side timing.
                 ended_at:
                   type: string
                   format: date-time
-                  description: Timestamp when the client closed the session.
+                  description: Timestamp when the client closed the session. Used to compute final `duration_seconds` against the meeting's `created_at`; if omitted the server cannot calculate duration correctly.
+                duration_seconds:
+                  type: integer
+                  description: Client-reported session duration in seconds. If provided, server uses it directly; otherwise server computes it as `ended_at − created_at`.
       responses:
         '200':
           description: Meeting ended successfully
@@ -1065,7 +1069,7 @@ paths:
                   type: string
                   enum:
                     - public
-                    - private
+                    - restricted
                 webhook_url:
                   type: string
                 redirect_url:

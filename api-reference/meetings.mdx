@@ -1,36 +1,17 @@
 ---
 title: 'Meetings'
-description: 'Create meetings from scenarios and manage meeting sessions'
-openapi: 'POST /meetings'
+description: 'Create a live AI meeting room from a scenario.'
 ---
 
-## Overview
+A meeting is a live AI conversation session. Creating one spins up a Daily.co video room with your AI persona ready to talk and returns the join URL.
 
-A meeting is a live AI conversation session created from a scenario. Creating one spins up a Daily.co video room with your AI persona ready to talk and returns the room URL and token.
+<Tip>
+  Every account is auto-seeded with two ready-to-use scenarios — **Plus One** and **Requirement Gathering**. List them with [`GET /scenarios`](/api-reference/scenarios) and look for the `default_kind` field. No need to build a scenario before your first meeting.
+</Tip>
 
-## Create Meeting
+## Create a meeting
 
-Create a new meeting from a scenario. This is the main endpoint you call to start a session for a participant.
-
-<ParamField body="person_name" type="string" required>
-  Name of the participant joining the session
-</ParamField>
-
-<ParamField body="scenario_id" type="string" required>
-  UUID of the scenario to use
-</ParamField>
-
-<ParamField body="voice_id" type="string">
-  Override the persona's default voice for this session. Get available voices from the [Voices API](/api-reference/voices).
-</ParamField>
-
-<ParamField body="meeting_type" type="string">
-  `regular` (default) or `instant`
-</ParamField>
-
-<ParamField body="note_context" type="string">
-  Session-specific context injected into the AI's prompt without changing the scenario. Use this to personalize: "Candidate has 8 years at Google, specializes in ML infrastructure."
-</ParamField>
+The minimum you need is a `scenario_id` and a `person_name`.
 
 ```bash
 curl -X POST https://api.waterr.ai/v1/meetings \
@@ -38,10 +19,29 @@ curl -X POST https://api.waterr.ai/v1/meetings \
   -H "Content-Type: application/json" \
   -d '{
     "person_name": "John Doe",
-    "scenario_id": "scenario-uuid",
-    "note_context": "Candidate previously worked on distributed caching at scale. Focus on consistency vs availability trade-offs."
+    "scenario_id": "scenario-uuid"
   }'
 ```
+
+<ParamField body="person_name" type="string" required>
+  Name of the participant joining the session.
+</ParamField>
+
+<ParamField body="scenario_id" type="string" required>
+  UUID of the scenario this meeting runs.
+</ParamField>
+
+<ParamField body="voice_id" type="string">
+  Override the persona's default voice for this session. See [Voices](/api-reference/voices).
+</ParamField>
+
+<ParamField body="meeting_type" type="string">
+  `regular` (default) or `instant`.
+</ParamField>
+
+<ParamField body="note_context" type="string">
+  Session-specific context injected into the AI's prompt without changing the scenario. Use this to personalize: "Candidate has 8 years at Google, focus on ML infrastructure."
+</ParamField>
 
 ### Response
 
@@ -50,19 +50,10 @@ curl -X POST https://api.waterr.ai/v1/meetings \
   "success": true,
   "data": {
     "id": "meeting-uuid",
-    "daily_meeting_id": "abc123",
     "daily_meeting_url": "https://waterr-xx.daily.co/abc123",
     "room_token": "eyJhbGciOiJIUzI1NiIs...",
     "meeting_url": "https://waterr.ai/meeting/meeting-uuid",
-    "person_name": "John Doe",
-    "scenario_id": "scenario-uuid",
-    "status": "created",
-    "meeting_type": "regular",
-    "scenario": {
-      "name": "System Design Interview",
-      "type": "interview",
-      "description": "Practice system design for senior backend roles"
-    }
+    "status": "created"
   },
   "session_minutes_info": {
     "estimatedMinutes": 25,
@@ -71,24 +62,19 @@ curl -X POST https://api.waterr.ai/v1/meetings \
 }
 ```
 
-### Key response fields
-
 | Field | Use |
-|-------|-----|
-| `daily_meeting_url` | The Daily.co room URL — embed this or redirect the participant here |
-| `room_token` | Auth token for the Daily.co room (needed for SDK-based joins) |
-| `meeting_url` | WaterrAI-hosted meeting page URL (participant-friendly) |
-| `id` | Meeting UUID — use this to fetch analysis, transcript, and recording later |
-| `session_minutes_info` | Your remaining session minutes after this meeting |
+| --- | --- |
+| `meeting_url` | WaterrAI-hosted page — easiest way to drop a user in. |
+| `daily_meeting_url` | Raw Daily.co room URL — for embeds or SDK joins. |
+| `room_token` | Auth token for SDK joins. |
+| `id` | Use this to fetch [post-meeting data](/api-reference/post-meeting). |
 
-### Joining the meeting
+## Joining the meeting
 
-**Option 1: WaterrAI hosted page** — redirect the participant to `meeting_url`:
-```
-https://waterr.ai/meeting/{meeting_id}
-```
+**Hosted page** — redirect the participant to `meeting_url`.
 
-**Option 2: Embed with iframe**
+**Iframe embed:**
+
 ```html
 <iframe
   src="DAILY_MEETING_URL?t=ROOM_TOKEN"
@@ -97,20 +83,17 @@ https://waterr.ai/meeting/{meeting_id}
 ></iframe>
 ```
 
-**Option 3: Daily.co SDK** (full control over UI)
+**Daily.co SDK** for full UI control:
+
 ```javascript
 import DailyIframe from '@daily-co/daily-js';
-
 const call = DailyIframe.createCallObject();
-await call.join({
-  url: response.data.daily_meeting_url,
-  token: response.data.room_token,
-});
+await call.join({ url: data.daily_meeting_url, token: data.room_token });
 ```
 
-## Create End-User Meeting
+## End-user meetings (no JWT)
 
-For public/embedded scenarios — no JWT required. Uses the `allowEmbed` middleware.
+For public or embedded scenarios, you can create a meeting without an API key — session minutes are billed to the **scenario creator's** account.
 
 ```bash
 curl -X POST https://api.waterr.ai/v1/meetings/end-user \
@@ -122,66 +105,17 @@ curl -X POST https://api.waterr.ai/v1/meetings/end-user \
   }'
 ```
 
-<ParamField body="end_user_id" type="string" required>
-  UUID of the end user (from your auth flow). Session minutes are billed to the scenario creator's account.
-</ParamField>
+## After the meeting ends
 
-<Note>
-  End-user meetings consume session minutes from the **scenario creator's** account, not the end user's. This is how embedded and public scenarios work.
-</Note>
+`GET /meetings/{id}` returns the meeting along with its transcript, summary, and goal scores. See [Post-Meeting Data](/api-reference/post-meeting).
 
-## Get Meeting by ID
+## All meeting endpoints
 
-<ParamField path="id" type="string" required>
-  The meeting UUID
-</ParamField>
-
-```bash
-curl -X GET https://api.waterr.ai/v1/meetings/{id} \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "meeting-uuid",
-    "daily_meeting_id": "abc123",
-    "daily_meeting_url": "https://waterr-xx.daily.co/abc123",
-    "person_name": "John Doe",
-    "scenario_id": "scenario-uuid",
-    "status": "ended",
-    "duration_seconds": 1420,
-    "created_at": "2024-01-15T10:40:00Z",
-    "ended_at": "2024-01-15T11:03:40Z"
-  }
-}
-```
-
-## End Meeting
-
-Programmatically end a meeting (e.g., when a time limit is reached).
-
-```bash
-curl -X PUT https://api.waterr.ai/v1/meetings/{meetingId}/end \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-## Delete Meeting
-
-Soft-delete a meeting (marks as deleted but preserves data).
-
-```bash
-curl -X PATCH https://api.waterr.ai/v1/meetings/{meetingId}/soft-delete \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-## What happens after a meeting ends
-
-1. **Recording** is finalized and uploaded (~2-5 min)
-2. **Transcript** is processed into sentences (~30 sec)
-3. **Analysis** with goal scores is generated (~60 sec)
-4. **Webhook** fires (if configured) with full results
-5. **Email notifications** sent to configured recipients
-
-See [Session Lifecycle](/api-reference/session-lifecycle) for the complete flow and how to poll or listen for results.
+| Method | Endpoint | Use |
+| --- | --- | --- |
+| `POST` | [`/meetings`](/api-reference/endpoint/post-meetings) | Create |
+| `GET` | [`/meetings/{id}`](/api-reference/endpoint/get-meetings-id) | Get one — includes transcript + analysis |
+| `GET` | [`/meetings`](/api-reference/endpoint/get-meetings) | List |
+| `PUT` | [`/meetings/{id}/end`](/api-reference/endpoint/put-meetings-meetingid-end) | End a live meeting |
+| `PUT` | [`/meetings/{id}`](/api-reference/endpoint/put-meetings-meetingid) | Update |
+| `DELETE` | [`/meetings/{id}`](/api-reference/endpoint/delete-meetings-meetingid) | Delete |

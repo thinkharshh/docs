@@ -1,122 +1,41 @@
 ---
 title: 'Scenarios'
-description: 'Create and manage conversation scenarios with embed support'
-openapi: 'POST /scenarios'
+description: 'Scenarios define what an AI meeting is about — a persona, a script, and goals.'
 ---
 
-## Overview
+A scenario bundles a [persona](/api-reference/personas), a meeting script (prompt), evaluation goals, and session settings (duration, recording, vision, etc.). You point a meeting at a `scenario_id` to start a session.
 
-Scenarios define conversation contexts that combine a persona with instructions, goals, and settings. Scenarios can be public (for embedding) or restricted.
+## Starter scenarios (auto-seeded)
 
-## Get All Scenarios
+Every new account already has **two scenarios** ready to use. List them and you'll see them in the response.
 
 ```bash
-curl -X GET https://api.waterr.ai/v1/scenarios \
+curl https://api.waterr.ai/v1/scenarios \
   -H "Authorization: Bearer wai_<your_key>"
 ```
 
-## Get Scenario by ID
+Look for the `default_kind` field:
 
-Returns full scenario data including persona, goals, meeting controls, and session options.
+| `default_kind` | Scenario |
+| --- | --- |
+| `"plus_one"` | A personalized AI meeting (intro/coaching). |
+| `"requirement_gathering"` | An AI that scopes a project by interviewing you. |
+| `null` | Scenarios you or your teammates created. |
 
-<ParamField path="id" type="string" required>
-  The scenario UUID
-</ParamField>
+Grab the `id` and pass it to [`POST /meetings`](/api-reference/meetings) — that's the fastest way to a live AI session.
+
+## Get one scenario
 
 ```bash
-curl -X GET https://api.waterr.ai/v1/scenarios/{id} \
+curl https://api.waterr.ai/v1/scenarios/{id} \
   -H "Authorization: Bearer wai_<your_key>"
 ```
 
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "scenario-uuid",
-    "name": "System Design Interview",
-    "description": "Practice system design for senior backend roles",
-    "type": "interview",
-    "persona_id": "persona-uuid",
-    "prompt": "You are Sarah Chen...",
-    "call_duration": 25,
-    "visibility": "public",
-    "scenario_link": "system-design-interview",
-    "welcome_message": "Hi! I'm Sarah...",
-    "Persona": {
-      "id": "persona-uuid",
-      "name": "Sarah Chen",
-      "job_title": "VP of Engineering",
-      "avatar": "https://..."
-    },
-    "DirectGoals": [...],
-    "MeetingControls": {
-      "allow_recording": true,
-      "allow_transcription": false,
-      "allow_live_vision": false,
-      "allow_web_search": false,
-      "allow_screen_share": false,
-      "allow_participant_video": false,
-      "allow_participant_audio": true,
-      "deep_think": false,
-      "language": "English"
-    }
-  }
-}
-```
+The response includes the full prompt, nested `Persona`, attached goals, meeting controls, and session options.
 
-## Get Scenario for Embed
+## Create a scenario
 
-Public endpoint — no authentication required for public scenarios.
-
-```bash
-curl -X GET https://api.waterr.ai/v1/scenarios/embed/{id}
-```
-
-<Note>
-  Only works for scenarios with `visibility: "public"`. For restricted scenarios, use the authenticated GET endpoint.
-</Note>
-
-## Create Scenario
-
-<ParamField body="name" type="string" required>
-  Scenario name (shown in dashboard and to participants)
-</ParamField>
-
-<ParamField body="type" type="string" required>
-  Category: `interview`, `roleplay`, `upskill`, `brainstorm`
-</ParamField>
-
-<ParamField body="persona_id" type="string" required>
-  UUID of the persona to use
-</ParamField>
-
-<ParamField body="prompt" type="string">
-  Meeting script — conversation flow, behavioral rules, guardrails. Markdown supported. See the [Prompting Guide](/api-reference/prompting-guide).
-</ParamField>
-
-<ParamField body="description" type="string">
-  Short description shown on the join page
-</ParamField>
-
-<ParamField body="call_duration" type="integer">
-  Maximum session length in minutes. Default: 30
-</ParamField>
-
-<ParamField body="welcome_message" type="string">
-  AI's opening line when a participant joins. Auto-generated from prompt if omitted.
-</ParamField>
-
-<ParamField body="visibility" type="string">
-  `public` (default) or `restricted`
-</ParamField>
-
-<ParamField body="goals" type="array">
-  Array of [Goal](/api-reference/goals) UUIDs for post-session evaluation
-</ParamField>
-
-<ParamField body="user_prompt" type="string">
-  Your original plain-text description (stored for reference)
-</ParamField>
+When you need a custom flow.
 
 ```bash
 curl -X POST https://api.waterr.ai/v1/scenarios \
@@ -126,131 +45,71 @@ curl -X POST https://api.waterr.ai/v1/scenarios \
     "name": "System Design Interview",
     "description": "Practice system design for senior backend roles",
     "type": "interview",
-    "persona_id": "persona-uuid",
-    "prompt": "You are Sarah Chen, VP of Engineering...\n\n## Flow\n1. Intro (2 min)\n2. System design problem (15 min)\n3. Follow-ups (5 min)\n4. Their questions (3 min)\n\n## Rules\n- One question at a time\n- Push back on vague answers",
+    "persona_id": "PERSONA_UUID",
+    "prompt": "You are Sarah Chen, VP of Engineering...\n\n## Flow\n1. Intro (2 min)\n2. System design problem (15 min)\n3. Their questions (3 min)\n\n## Rules\n- Push back on vague answers",
     "call_duration": 25,
-    "welcome_message": "Hi! I'\''m Sarah. Let'\''s dive into a system design discussion.",
-    "goals": ["goal-uuid-1", "goal-uuid-2"]
+    "welcome_message": "Hi! I'\''m Sarah. Let'\''s talk system design.",
+    "visibility": "public",
+    "goals": ["GOAL_UUID_1", "GOAL_UUID_2"]
   }'
 ```
 
-<Note>
-  Creating a scenario automatically generates a `MeetingControls` record with default settings (recording on, camera off, screen share off, etc.) and a unique `scenario_link` for sharing.
-</Note>
+<ParamField body="name" type="string" required>
+  Shown in the dashboard and to participants.
+</ParamField>
 
-## Create with AI (GPT)
+<ParamField body="type" type="string" required>
+  `interview`, `roleplay`, `upskill`, or `brainstorm`.
+</ParamField>
 
-Generate a complete scenario — persona, prompt, and goals — from a text description. Optionally attach a file (resume, job description, product brief).
+<ParamField body="persona_id" type="string" required>
+  UUID of the persona — see [Personas](/api-reference/personas).
+</ParamField>
+
+<ParamField body="prompt" type="string">
+  The meeting script — flow, rules, guardrails. Markdown supported. See the [Prompting Guide](/api-reference/prompting-guide).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Short description shown to participants on the join page.
+</ParamField>
+
+<ParamField body="call_duration" type="integer">
+  Max session length in minutes. Default `30`.
+</ParamField>
+
+<ParamField body="welcome_message" type="string">
+  The AI's opening line. If omitted, one is auto-generated from the prompt.
+</ParamField>
+
+<ParamField body="visibility" type="string">
+  `public` (embeddable) or `restricted` (invite-only). Default `public`.
+</ParamField>
+
+<ParamField body="goals" type="array">
+  Array of [Goal](/api-reference/goals) UUIDs for post-session scoring.
+</ParamField>
+
+## Generate a scenario with AI
+
+Skip building manually. Describe what you want and the AI generates a persona, prompt, and goals.
 
 ```bash
 curl -X POST https://api.waterr.ai/v1/scenarios/create-with-gpt \
   -H "Authorization: Bearer wai_<your_key>" \
-  -F 'userInput=Sales discovery call with a skeptical enterprise buyer evaluating 3 competing solutions. 20 minutes.' \
-  -F 'duration=20' \
-  -F 'allow_live_vision=false' \
-  -F 'allow_web_search=true'
+  -F 'userInput=Technical interview for senior backend engineer, system design focus, 25 minutes' \
+  -F 'duration=25'
 ```
 
-<ParamField body="userInput" type="string" required>
-  Plain-text description of what you want. Be specific about context, roles, and goals.
-</ParamField>
+Attach a resume or JD with `-F 'file=@resume.pdf'`. The response gives you a `scenario_id` ready to use.
 
-<ParamField body="file" type="file">
-  Resume, job description, or product brief (PDF, DOC, DOCX). The AI uses this as context.
-</ParamField>
+## All scenario endpoints
 
-<ParamField body="duration" type="integer">
-  Session duration in minutes. Default: 30
-</ParamField>
-
-<ParamField body="allow_live_vision" type="string">
-  `"true"` or `"false"` — enable camera/screen vision
-</ParamField>
-
-<ParamField body="allow_web_search" type="string">
-  `"true"` or `"false"` — enable web search during conversation
-</ParamField>
-
-<ParamField body="type" type="string">
-  Override the AI-detected type
-</ParamField>
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {
-    "scenario_id": "generated-uuid",
-    "scenario_type": "roleplay",
-    "generatedPersona": {
-      "name": "Morgan Liu",
-      "job_title": "VP of Operations",
-      "background": "...",
-      "avatar": "https://...",
-      "voice_id": "..."
-    },
-    "createdGoals": [
-      { "id": "...", "name": "Discovery Quality", "description": "..." },
-      { "id": "...", "name": "Objection Handling", "description": "..." }
-    ]
-  }
-}
-```
-
-## Update Scenario
-
-<ParamField path="id" type="string" required>
-  The scenario UUID
-</ParamField>
-
-```bash
-curl -X PUT https://api.waterr.ai/v1/scenarios/{id} \
-  -H "Authorization: Bearer wai_<your_key>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Advanced System Design Interview",
-    "call_duration": 30,
-    "prompt": "Updated instructions..."
-  }'
-```
-
-## Update Session Options
-
-Control session behavior settings for a scenario.
-
-```bash
-curl -X PUT https://api.waterr.ai/v1/scenarios/{scenarioId}/session-options \
-  -H "Authorization: Bearer wai_<your_key>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "duration": 30,
-    "booking_enabled": true,
-    "booking_url": "https://cal.com/yourname/interview",
-    "webhook_url": "https://your-app.com/webhooks/waterr"
-  }'
-```
-
-## Delete Scenario
-
-```bash
-curl -X DELETE https://api.waterr.ai/v1/scenarios/{id} \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-## Meeting Controls
-
-Every scenario has associated meeting controls that configure the session experience. These are created with defaults when you create a scenario. To update them, use the scenario settings endpoints.
-
-| Control | Default | Description |
-|---------|---------|-------------|
-| `allow_recording` | `true` | Record the session |
-| `allow_transcription` | `false` | Auto-transcribe audio |
-| `allow_live_vision` | `false` | AI can see camera/screen |
-| `allow_web_search` | `false` | AI can search the web |
-| `allow_screen_share` | `false` | Participant can share screen |
-| `allow_participant_video` | `false` | Participant camera |
-| `allow_participant_audio` | `true` | Participant microphone |
-| `deep_think` | `false` | AI pauses to reason before responding |
-| `language` | `"English"` | Conversation language |
-| `max_participants` | `null` | Max participants (null = unlimited) |
-| `end_call_enabled` | `false` | Participant can end the call |
+| Method | Endpoint | Use |
+| --- | --- | --- |
+| `POST` | [`/scenarios`](/api-reference/endpoint/post-scenarios) | Create |
+| `GET` | [`/scenarios`](/api-reference/endpoint/get-scenarios) | List (includes `default_kind`) |
+| `PUT` | [`/scenarios/{id}`](/api-reference/endpoint/put-scenarios-id) | Update |
+| `DELETE` | [`/scenarios/{id}`](/api-reference/endpoint/delete-scenarios-id) | Delete |
+| `GET` | [`/scenarios/{id}/export`](/api-reference/endpoint/get-scenarios-id-export) | Export as JSON |
+| `GET` | [`/scenarios/membership/{id}/meetings`](/api-reference/endpoint/get-scenarios-membership-membershipid-meetings) | List meetings for a scenario |

@@ -1,82 +1,15 @@
 ---
 title: 'Personas'
-description: 'Create, read, update, and delete personas'
-openapi: 'POST /personas'
+description: 'The AI character — name, role, demeanor, voice. Reusable across scenarios.'
 ---
 
-## Overview
+A persona is the AI's identity: name, job title, personality, background, voice. One persona can power many scenarios.
 
-Personas represent AI characters with specific personality traits, backgrounds, and voice characteristics. They are reusable across multiple scenarios.
+<Tip>
+  Most integrations never touch this endpoint directly. The auto-seeded **Plus One** and **Requirement Gathering** scenarios already have personas attached, and [`POST /scenarios/create-with-gpt`](/api-reference/scenarios#generate-a-scenario-with-ai) generates a persona for you. Reach for these endpoints only when you're building fully custom scenarios by hand.
+</Tip>
 
-## Get All Personas
-
-Retrieve all personas for the authenticated user.
-
-```bash
-curl -X GET https://api.waterr.ai/v1/personas \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": "persona-uuid",
-      "name": "Sarah Chen",
-      "job_title": "Senior Product Manager",
-      "demeanor": "friendly",
-      "background": "Experienced product manager...",
-      "voice_id": 1,
-      "avatar": "https://example.com/avatar.jpg",
-      "created_at": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
-```
-
-## Get Persona by ID
-
-<ParamField path="id" type="integer" required>
-  The persona ID
-</ParamField>
-
-```bash
-curl -X GET https://api.waterr.ai/v1/personas/{id} \
-  -H "Authorization: Bearer wai_<your_key>"
-```
-
-## Create Persona
-
-Create a new persona with specified characteristics.
-
-<ParamField body="name" type="string" required>
-  Name of the persona (max 100 characters)
-</ParamField>
-
-<ParamField body="job_title" type="string" required>
-  Job title of the persona (max 100 characters)
-</ParamField>
-
-<ParamField body="demeanor" type="string">
-  Personality style. Options: friendly, analytical, empathetic, curious, enthusiastic, critical, casual, blunt, assertive, neutral
-</ParamField>
-
-<ParamField body="background" type="string">
-  Detailed background information about the persona
-</ParamField>
-
-<ParamField body="gender" type="string">
-  `male` or `female` — used for default voice and avatar selection if not specified
-</ParamField>
-
-<ParamField body="voice_id" type="string">
-  UUID of the voice. Get available voices from the [Voices API](/api-reference/voices). If omitted, a default voice is assigned based on gender.
-</ParamField>
-
-<ParamField body="avatar" type="string">
-  URL to the persona's avatar image. If omitted, a default avatar is assigned based on gender.
-</ParamField>
+## Create a persona
 
 ```bash
 curl -X POST https://api.waterr.ai/v1/personas \
@@ -87,49 +20,48 @@ curl -X POST https://api.waterr.ai/v1/personas \
     "job_title": "VP of Engineering",
     "demeanor": "analytical",
     "background": "15 years building distributed systems at scale. Led engineering at two startups through Series B.",
-    "gender": "female"
+    "gender": "female",
+    "voice_id": "VOICE_UUID"
   }'
 ```
 
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "persona-uuid",
-    "name": "Sarah Chen",
-    "job_title": "Senior Product Manager",
-    "demeanor": "friendly",
-    "background": "Experienced product manager...",
-    "voice_id": 1,
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-## Update Persona
-
-<ParamField path="id" type="integer" required>
-  The persona ID to update
+<ParamField body="name" type="string" required>
+  Full name of the AI persona.
 </ParamField>
 
-```bash
-curl -X PUT https://api.waterr.ai/v1/personas/{id} \
-  -H "Authorization: Bearer wai_<your_key>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Sarah Chen",
-    "job_title": "VP of Product",
-    "demeanor": "analytical"
-  }'
-```
-
-## Delete Persona
-
-<ParamField path="id" type="integer" required>
-  The persona ID to delete
+<ParamField body="job_title" type="string" required>
+  Professional title (shown to participants).
 </ParamField>
 
+<ParamField body="demeanor" type="string">
+  Personality style. Options: `friendly`, `analytical`, `empathetic`, `curious`, `enthusiastic`, `critical`, `casual`, `blunt`, `assertive`, `neutral`.
+</ParamField>
+
+<ParamField body="background" type="string">
+  Detailed background — the more specific, the better the AI's follow-up questions.
+</ParamField>
+
+<ParamField body="gender" type="string">
+  `male` or `female` — used for default voice and avatar selection.
+</ParamField>
+
+<ParamField body="voice_id" type="string">
+  Voice UUID from [Voices](/api-reference/voices). If omitted, a default voice is assigned based on `gender`.
+</ParamField>
+
+## List personas
+
 ```bash
-curl -X DELETE https://api.waterr.ai/v1/personas/{id} \
+curl https://api.waterr.ai/v1/personas \
   -H "Authorization: Bearer wai_<your_key>"
 ```
+
+## All persona endpoints
+
+| Method | Endpoint | Use |
+| --- | --- | --- |
+| `POST` | [`/personas`](/api-reference/endpoint/post-personas) | Create |
+| `GET` | [`/personas/{id}`](/api-reference/endpoint/get-personas-id) | Get one |
+| `GET` | [`/personas`](/api-reference/endpoint/get-personas) | List |
+| `PUT` | [`/personas/{id}`](/api-reference/endpoint/put-personas-id) | Update |
+| `DELETE` | [`/personas/{id}`](/api-reference/endpoint/delete-personas-id) | Delete |

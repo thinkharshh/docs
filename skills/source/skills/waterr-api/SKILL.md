@@ -1,23 +1,30 @@
 ---
-name: waterr
-description: Build custom integrations on the WaterrAI platform — AI meetings, scenarios, personas, transcripts, and analyses via the public REST API. Use when the user asks to integrate WaterrAI, build on top of Waterr, automate meeting creation, programmatically run AI interview/sales/training/onboarding sessions, ingest WaterrAI transcripts or analyses, build candidate-screening or customer-discovery flows, or says "build something with Waterr". Pairs with the `waterr-generate-understanding` skill which should run first for any non-trivial build to scope the use case before code is written.
+name: waterr-api
+description: Build production integrations on the WaterrAI meeting platform — AI personas, scenarios, live meetings, transcripts, recordings, and post-meeting analyses via the public REST API. Use whenever the user wants to integrate WaterrAI, build on top of Waterr, automate meeting creation, run programmatic AI interview/sales/training/onboarding sessions, ingest transcripts or analyses, build candidate-screening or customer-discovery flows, or mentions "Waterr", "meet.waterr.ai", or "build something with Waterr". Bundles a scoping sub-skill that interviews the user and produces a written scope-of-work before any code is written.
 license: MIT
 compatibility: claude-code, cursor, windsurf, copilot
 metadata:
-  version: "1.0.0"
+  version: "2.0.1"
   homepage: "https://docs.waterr.ai"
   source: "https://github.com/waterrai/skills"
 ---
 
 # WaterrAI Developer Skill
 
-You are helping the user build a custom integration on top of the WaterrAI platform. WaterrAI is an AI meeting platform — personas (the AI participants), scenarios (the meeting setup), meetings (live rooms), transcripts, and post-meeting analyses are the primary resources.
+## Overview
+
+Production-ready guide for building on the [WaterrAI](https://waterr.ai) meeting platform via its public REST API — personas, scenarios, meetings, transcripts, and analyses.
+
+- Covers the full developer surface: auth, session lifecycle, personas, scenarios, meetings, transcripts, recordings, analyses, goals, voices, users, webhooks, SDKs — every endpoint links straight to the live docs at https://docs.waterr.ai
+- Bundles a `generate-understanding` sub-skill that runs a 3-round scoping interview and produces `WATERR_BUILD_SCOPE.md` before any code is written — gates implementation on explicit user sign-off
+- Encodes the common pitfalls that bite first-time integrators: `membership_id` vs user ID, voice-ID enumeration, async analyses, workspace-scoped scenarios
+- Compatible with Claude Code, Cursor, Windsurf, and GitHub Copilot — install with `npx skills add waterrai/skills`
 
 ## First step, every time: scope before you code
 
-For any request beyond a one-line "show me how to call endpoint X," invoke the companion skill **`waterr-generate-understanding`** before writing any code. It interviews the user, produces a written scope-of-work, and only then hands off to implementation. Skipping it produces code that doesn't match what the user actually wants.
+For any request beyond a one-line "show me how to call endpoint X," load and follow the bundled sub-skill at `skills/generate-understanding/SKILL.md` (relative to this file) before writing any code. It interviews the user, produces a written scope-of-work, and only then hands back to you for implementation. Skipping it produces code that doesn't match what the user actually wants.
 
-You may skip `waterr-generate-understanding` only when:
+You may skip the `generate-understanding` sub-skill only when:
 - The user explicitly says "skip the scoping" / "I know what I want, just do X"
 - The request is a single concrete API call lookup ("what's the curl for creating a persona?")
 
@@ -79,4 +86,4 @@ Verify each step against the docs page above before writing the call.
 
 - Cite the docs URL for every endpoint you reference.
 - Show real curl or SDK code, not pseudo-code.
-- If the user's request needs a flow you haven't built before, run `waterr-generate-understanding` first, write the scope to a file, get user sign-off, then implement.
+- If the user's request needs a flow you haven't built before, load `skills/generate-understanding/SKILL.md` first, write the scope to a file, get user sign-off, then implement.

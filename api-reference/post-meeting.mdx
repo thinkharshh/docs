@@ -1,0 +1,117 @@
+---
+title: 'Post-Meeting Data'
+description: 'Get the recording, transcript, summary, and goal scores after a meeting ends — all in one call.'
+---
+
+Once a meeting ends, everything you need — **summary, transcript, goal scores, strengths, growth areas, speech analytics** — is returned by a single endpoint:
+
+```
+GET /meetings/{meetingId}
+```
+
+You only need a second call if you want the recording **media URL**.
+
+## The single call
+
+```bash
+curl https://api.waterr.ai/v1/meetings/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+The response includes:
+
+| Field | What it is |
+| --- | --- |
+| `status` | `created` / `active` / `ended` |
+| `analysis_status` | `not_started` / `processing` / `completed` — poll this |
+| `summary`, `ended_at`, `duration_seconds` | Meeting-level metadata |
+| `Scenario` | The scenario this meeting ran (with nested `Persona` and `Goals`) |
+| `sentenced_transcripts[]` | Full transcript — `speaker`, `message`, `start_duration`, `sequence_number` |
+| `analysis` | The full AI analysis block (only present once `analysis_status: "completed"`) |
+| `participants[]` | Who joined the room |
+
+The `analysis` block contains:
+
+- `summary`, `call_summary` — short and long-form summaries
+- `average_score`, `total_score` — overall scoring
+- `strengths`, `growth_areas` — qualitative feedback
+- `filler_words`, `weak_words`, `repetitions`, `sentence_starters` — speech analytics
+- `goal_results[]` — per-goal score with `short_description`, `long_description`, `score`, and the original `goal` definition
+
+## Polling for analysis
+
+Analysis is generated **30–60 seconds after the meeting ends**. Poll `GET /meetings/{id}` and check `analysis_status`:
+
+```javascript
+async function waitForAnalysis(meetingId, maxAttempts = 12) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(`https://api.waterr.ai/v1/meetings/${meetingId}`, {
+      headers: { 'Authorization': `Bearer ${API_KEY}` }
+    });
+    const meeting = await res.json();
+
+    if (meeting.analysis_status === 'completed') return meeting;
+    if (meeting.analysis_status === 'not_started' && meeting.status !== 'ended') {
+      throw new Error('Meeting has not ended yet');
+    }
+
+    await new Promise(r => setTimeout(r, 5000));
+  }
+  throw new Error('Analysis not ready after max attempts');
+}
+
+const meeting = await waitForAnalysis('meeting-uuid');
+console.log('Score:', meeting.analysis.average_score);
+console.log('Transcript:', meeting.sentenced_transcripts);
+console.log('Goal results:', meeting.analysis.goal_results);
+```
+
+<Tip>
+  For production, use [Webhooks](/api-reference/webhooks) (`meeting.ended`, `analysis.completed`) instead of polling.
+</Tip>
+
+## Recording (separate call)
+
+The transcript and analysis are inline. The recording **media URL** lives on the CDN and is fetched separately:
+
+```bash
+curl https://api.waterr.ai/v1/recordings/url-with-thumbnail/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+The recording is typically ready **2–5 minutes after the meeting ends** — slower than analysis. You'll get back a CloudFront URL plus a thumbnail.
+
+If you just want the raw URL without a thumbnail, use `GET /recordings/meeting/{meetingId}` instead.
+
+## Re-running analysis
+
+If a meeting ended but analysis failed (or you've updated the scenario's goals and want to re-score), trigger a fresh run:
+
+```bash
+curl -X POST https://api.waterr.ai/v1/analyses/trigger/{meetingId} \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+## Underlying endpoints
+
+If you'd rather hit the individual resources directly:
+
+| Data | Endpoint |
+| --- | --- |
+| Analysis only | [`GET /analyses/meeting/{meetingId}`](/api-reference/endpoint/get-analyses-meeting-meetingid) |
+| Transcript only | [`GET /transcripts/meeting/{meetingId}`](/api-reference/endpoint/get-transcripts-meeting-meetingid) |
+| Recording URL | [`GET /recordings/url-with-thumbnail/{meetingId}`](/api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid) |
+| Re-trigger analysis | [`POST /analyses/trigger/{meetingId}`](/api-reference/endpoint/post-analyses-trigger-meetingid) |
+
+But for almost every integration, `GET /meetings/{meetingId}` is what you want.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks">
+    Get notified the moment analysis completes — skip polling.
+  </Card>
+  <Card title="Session Lifecycle" icon="circle-nodes" href="/api-reference/session-lifecycle">
+    Understand the full flow from create → join → end → analysis.
+  </Card>
+</CardGroup>

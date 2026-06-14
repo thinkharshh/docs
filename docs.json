@@ -98,17 +98,69 @@
             ]
           },
           {
-            "group": "Core APIs",
+            "group": "Meetings",
             "pages": [
-              "api-reference/scenarios",
-              "api-reference/meetings",
-              "api-reference/analysis",
-              "api-reference/transcripts",
-              "api-reference/recordings",
-              "api-reference/personas",
-              "api-reference/goals",
-              "api-reference/voices",
-              "api-reference/users"
+              "api-reference/endpoint/post-meetings",
+              "api-reference/endpoint/get-meetings-id",
+              "api-reference/endpoint/get-meetings",
+              "api-reference/endpoint/put-meetings-meetingid-end",
+              "api-reference/endpoint/put-meetings-meetingid",
+              "api-reference/endpoint/delete-meetings-meetingid"
+            ]
+          },
+          {
+            "group": "Personas",
+            "pages": [
+              "api-reference/endpoint/post-personas",
+              "api-reference/endpoint/get-personas-id",
+              "api-reference/endpoint/get-personas",
+              "api-reference/endpoint/put-personas-id",
+              "api-reference/endpoint/delete-personas-id"
+            ]
+          },
+          {
+            "group": "Scenarios",
+            "pages": [
+              "api-reference/endpoint/post-scenarios",
+              "api-reference/endpoint/get-scenarios",
+              "api-reference/endpoint/put-scenarios-id",
+              "api-reference/endpoint/delete-scenarios-id",
+              "api-reference/endpoint/get-scenarios-id-export",
+              "api-reference/endpoint/get-scenarios-membership-membershipid-meetings"
+            ]
+          },
+          {
+            "group": "Post-Meeting Data",
+            "pages": [
+              "api-reference/endpoint/get-analyses-meeting-meetingid",
+              "api-reference/endpoint/get-analyses-id",
+              "api-reference/endpoint/post-analyses-trigger-meetingid",
+              "api-reference/endpoint/get-transcripts-meeting-meetingid",
+              "api-reference/endpoint/get-transcripts-id",
+              "api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid",
+              "api-reference/endpoint/get-recordings-meeting-meetingid"
+            ]
+          },
+          {
+            "group": "Goals",
+            "pages": [
+              "api-reference/endpoint/post-goals",
+              "api-reference/endpoint/get-goals",
+              "api-reference/endpoint/put-goals-id",
+              "api-reference/endpoint/delete-goals-id"
+            ]
+          },
+          {
+            "group": "Voices",
+            "pages": [
+              "api-reference/endpoint/get-voices"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api-reference/endpoint/get-users-userid",
+              "api-reference/endpoint/put-users-userid"
             ]
           },
           {
@@ -131,82 +183,6 @@
               "skills/claude-code",
               "skills/codex"
             ]
-          },
-          {
-            "group": "Analyses",
-            "pages": [
-              "api-reference/endpoint/get-analyses-id",
-              "api-reference/endpoint/get-analyses-meeting-meetingid",
-              "api-reference/endpoint/post-analyses-trigger-meetingid"
-            ]
-          },
-          {
-            "group": "Goals",
-            "pages": [
-              "api-reference/endpoint/get-goals",
-              "api-reference/endpoint/post-goals",
-              "api-reference/endpoint/delete-goals-id",
-              "api-reference/endpoint/put-goals-id"
-            ]
-          },
-          {
-            "group": "Meetings",
-            "pages": [
-              "api-reference/endpoint/get-meetings",
-              "api-reference/endpoint/post-meetings",
-              "api-reference/endpoint/get-meetings-id",
-              "api-reference/endpoint/delete-meetings-meetingid",
-              "api-reference/endpoint/put-meetings-meetingid",
-              "api-reference/endpoint/put-meetings-meetingid-end"
-            ]
-          },
-          {
-            "group": "Personas",
-            "pages": [
-              "api-reference/endpoint/get-personas",
-              "api-reference/endpoint/post-personas",
-              "api-reference/endpoint/delete-personas-id",
-              "api-reference/endpoint/get-personas-id",
-              "api-reference/endpoint/put-personas-id"
-            ]
-          },
-          {
-            "group": "Recordings",
-            "pages": [
-              "api-reference/endpoint/get-recordings-meeting-meetingid",
-              "api-reference/endpoint/get-recordings-url-with-thumbnail-meetingid"
-            ]
-          },
-          {
-            "group": "Scenarios",
-            "pages": [
-              "api-reference/endpoint/get-scenarios",
-              "api-reference/endpoint/post-scenarios",
-              "api-reference/endpoint/delete-scenarios-id",
-              "api-reference/endpoint/put-scenarios-id",
-              "api-reference/endpoint/get-scenarios-id-export",
-              "api-reference/endpoint/get-scenarios-membership-membershipid-meetings"
-            ]
-          },
-          {
-            "group": "Transcripts",
-            "pages": [
-              "api-reference/endpoint/get-transcripts-id",
-              "api-reference/endpoint/get-transcripts-meeting-meetingid"
-            ]
-          },
-          {
-            "group": "Users",
-            "pages": [
-              "api-reference/endpoint/get-users-userid",
-              "api-reference/endpoint/put-users-userid"
-            ]
-          },
-          {
-            "group": "Voices",
-            "pages": [
-              "api-reference/endpoint/get-voices"
-            ]
           }
         ]
       }
@@ -226,10 +202,22 @@
   "footer": {
     "socials": {
       "x": "https://x.com/waterr_ai",
-      "linkedin": "https://linkedin.com/company/waterr-ai"
+      "linkedin": "https://www.linkedin.com/company/waterrai"
     }
   },
   "redirects": [
+    {
+      "source": "/api-reference/analysis",
+      "destination": "/api-reference/post-meeting"
+    },
+    {
+      "source": "/api-reference/recordings",
+      "destination": "/api-reference/post-meeting"
+    },
+    {
+      "source": "/api-reference/transcripts",
+      "destination": "/api-reference/post-meeting"
+    },
     {
       "source": "/quickstart",
       "destination": "/getting-started/quickstart"
