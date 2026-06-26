@@ -1,0 +1,367 @@
+---
+title: Knowledge Base
+description: "Attach documents to a scenario and let the AI persona ground its answers in your data — either by deciding to retrieve, or by retrieving on every turn."
+---
+
+<Note>
+  Documents are reusable. Upload once via `/v1/files`, then attach to any
+  scenario via `/v1/scenarios/{id}/documents/{fileId}/attach`. Switch between
+  **LLM-decides retrieval** (`rag_mode: "auto"`) and **forced retrieval on
+  every turn** (`rag_mode: "always"`) with a single flag.
+</Note>
+
+## When to use this
+
+If your scenario needs the AI to answer from your data — product docs, an FAQ,
+a JD, a knowledge base, a brand book — rather than only its training knowledge,
+attach documents to the scenario. WaterrAI chunks, embeds, and indexes them at
+upload; at meeting time the persona retrieves the relevant passages and grounds
+its responses on them.
+
+## The two modes
+
+The single flag that matters is `rag_mode` on the scenario:
+
+| Mode | What happens at runtime | Use it when |
+|------|-------------------------|-------------|
+| `off` *(default)* | Attached documents are ignored. The scenario runs without retrieval. Toggling back to `auto`/`always` is instant — no re-attach. | You want to pause RAG without losing the attachment list. |
+| `auto` | A tool named `search_knowledge_base` is registered on the LLM. The model calls it when it judges retrieval is useful. Lower latency on small-talk; risk of skipping retrieval when it shouldn't. | General agents — sales discovery, coaching, interviewing — where most turns don't need lookups. |
+| `always` | Before every LLM response, we run a retrieval against the participant's last utterance and inject the top-k chunks as a system message. The LLM cannot skip retrieval. | Support bots, compliance Q&A, "stay strictly grounded in our docs" scenarios. The OpenAI Assistants `tool_choice: "required"` analog. |
+
+`auto` is what most enterprise voice platforms (Tavus, Retell) ship by default.
+`always` is the mode that makes a difference when accuracy matters more than
+conversational fluidity.
+
+## Build sequence
+
+```
+1. POST /v1/files                              upload PDF / DOCX / TXT
+2. (auto) ingest finishes — file is chunked + indexed
+3. POST /v1/scenarios/{id}/documents/{fileId}/attach   link to scenario
+4. PATCH /v1/scenarios/{id}    { rag_mode: "auto" | "always", rag_top_k: 5 }
+5. POST /v1/meetings { scenario_id }            persona is now grounded
+```
+
+## Step 1 — Upload a document
+
+Documents are uploaded through the existing **Files API**. Supported types
+today: `pdf`, `docx`, `doc`, `txt`, `md`, `csv`. Max 50 MB per file. Ingestion
+is async — typically 30 s for a single PDF, up to a few minutes for large
+DOCX/CSV.
+
+```bash
+curl -X POST https://api.waterr.ai/v1/files \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -F 'file=@product-handbook.pdf'
+```
+
+**Response (`201 Created`):**
+
+```json
+{
+  "data": {
+    "id": "file-uuid",
+    "file_name": "product-handbook.pdf",
+    "type": "pdf",
+    "size": 184320,
+    "processing_status": "pending",
+    "total_sections": null,
+    "created_at": "2026-06-19T10:00:00.000Z"
+  }
+}
+```
+
+Poll `GET /v1/files/{id}` until `processing_status === "completed"` or
+subscribe to the `file.indexed` webhook.
+
+## Step 2 — Attach to a scenario
+
+The same document can power any number of scenarios. Attachment is
+idempotent.
+
+```bash
+curl -X POST https://api.waterr.ai/v1/scenarios/{scenarioId}/documents/{fileId}/attach \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+**Response (`201 Created`):**
+
+```json
+{
+  "data": {
+    "id": "attachment-uuid",
+    "scenario_id": "scenario-uuid",
+    "file_id": "file-uuid",
+    "active": true,
+    "position": 0,
+    "bot_can_present": false,
+    "file": { "id": "file-uuid", "file_name": "product-handbook.pdf", ... }
+  }
+}
+```
+
+### Knowledge-only vs. presentable
+
+Every attached document is **RAG-eligible by default** — the bot can ground
+answers on it as soon as you set `rag_mode != "off"`. Presenting the document
+on screen mid-call is a separate, opt-in capability:
+
+```bash
+# Attach as a presentable deck (visible in present_content tool)
+curl -X POST https://api.waterr.ai/v1/scenarios/{id}/documents/{fileId}/attach \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -d '{ "bot_can_present": true }'
+
+# Knowledge-only — default. Bot can cite it, can NOT pull it up on screen.
+curl -X POST https://api.waterr.ai/v1/scenarios/{id}/documents/{fileId}/attach \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+| `bot_can_present` | RAG | Visual sharing |
+|---|---|---|
+| `false` *(default)* | yes | no — bot cannot pull this up |
+| `true` | yes | yes — appears in the `present_content` tool list |
+
+Use `false` for FAQs, pricing sheets, policies, internal handbooks — anything
+you want the bot to *know* but not *show*. Use `true` for pitch decks,
+brochures, demo slides where visual sharing is the point.
+
+To detach:
+
+```bash
+curl -X DELETE https://api.waterr.ai/v1/scenarios/{scenarioId}/documents/{fileId} \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+The file itself is preserved — only the link is removed.
+
+## Step 3 — Turn RAG on
+
+```bash
+curl -X PATCH https://api.waterr.ai/v1/scenarios/{scenarioId} \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rag_mode": "auto",
+    "rag_top_k": 5
+  }'
+```
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `rag_mode` | `"off"` \| `"auto"` \| `"always"` | `"off"` | See [the two modes](#the-two-modes). |
+| `rag_top_k` | integer `1..20` | `5` | Chunks returned per retrieval. Applies to both `auto` and `always`. |
+
+That's it. Create a meeting on this scenario and the persona will retrieve
+from your attached documents.
+
+## Mode semantics in detail
+
+### `auto` — LLM-decides retrieval
+
+At meeting init we register one tool on the LLM:
+
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "search_knowledge_base",
+    "description": "Search the attached documents for facts relevant to the user's question. Call this whenever you need product / pricing / policy details you don't already know.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string", "description": "Natural-language search query." }
+      },
+      "required": ["query"]
+    }
+  }
+}
+```
+
+When the LLM emits a `tool_call`, the meeting service runs the search
+internally and returns the top-k chunks as the tool result. The persona
+prompt is automatically augmented with a one-line instruction explaining
+when to call the tool — you don't have to write it yourself.
+
+On Gemini Live models the tool is registered with `behavior=NON_BLOCKING` and
+`scheduling=WHEN_IDLE` so audio output keeps flowing while retrieval runs.
+
+### `always` — forced retrieval every turn
+
+Before each LLM response, the meeting service:
+
+1. Takes the participant's last utterance (or, if none, the current persona
+   prompt) as the query.
+2. Runs `search_knowledge_base(query, top_k=rag_top_k)` against the
+   attached documents.
+3. Injects the resulting chunks as a system-role message into the LLM
+   context immediately before the assistant turn:
+
+```
+[knowledge_base]
+[1] product-handbook.pdf, p.3: "The Pro plan is $49/month and includes…"
+[2] faq.md#refunds: "Refunds are issued within 7 days…"
+[knowledge_base/]
+```
+
+The LLM responds with this context guaranteed to be present. Skipping
+retrieval is impossible — useful for "stay grounded in internal docs only"
+scenarios.
+
+## Gemini Live fast path *(automatic)*
+
+When a scenario runs on Gemini Live (`gemini-live-2.5-flash-native-audio`),
+WaterrAI transparently routes retrieval through **Vertex AI's managed RAG
+Engine** instead of our default Pinecone pipeline. You don't configure
+anything — the routing is automatic.
+
+What you get:
+
+- **~50 ms retrieval latency** instead of ~150 ms (no webhook round-trip;
+  retrieval happens inside the same Vertex datacenter as the Live session).
+- **No audio gap** during retrieval — Vertex hands chunks to the model
+  in-line with generation.
+- **`groundingMetadata` on every response** — Gemini returns exactly which
+  span of which chunk grounded which token of the answer, surfaced in the
+  meeting analysis with one-click jump-to-source.
+
+How it works under the hood:
+
+1. When you upload a file via `POST /v1/files`, we index it in Pinecone
+   (the universal path) **and** mirror the extracted text into your
+   workspace's Vertex `RagCorpus` in the background.
+2. At meeting init, if the scenario uses Gemini Live, `rag_mode = "auto"`,
+   and all attached files have mirrored, we attach
+   `Tool(retrieval=Retrieval(vertex_rag_store=...))` to the Live session.
+3. Otherwise — `rag_mode = "always"`, non-Gemini model, or any file not
+   yet mirrored — we fall back to the function-call path against Pinecone.
+   No retrieval is dropped; only the backend changes.
+
+You can introspect which backend served a meeting via the new
+`backend: "vertex_rag" | "pinecone"` field on the
+`GET /meetings/{id}/retrievals` response.
+
+The fast path is currently used only with `rag_mode = "auto"` —
+`rag_mode = "always"` always uses Pinecone so we can fully control the
+pre-turn injection. This is a deliberate v1 choice; the Vertex path may
+expand to `always` mode in a later release.
+
+## What's stored in the meeting
+
+Every retrieval — whether triggered by `auto` or `always` — is logged on the
+meeting:
+
+```bash
+curl https://api.waterr.ai/v1/meetings/{meetingId}/retrievals \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "retrieval-uuid",
+      "turn_index": 4,
+      "query": "what's the refund window?",
+      "top_k": 5,
+      "chunks": [
+        { "file_id": "file-uuid", "section": "FAQ§Refunds", "score": 0.81 }
+      ],
+      "latency_ms": 47,
+      "created_at": "2026-06-19T10:05:23.000Z"
+    }
+  ]
+}
+```
+
+Use this in the post-meeting analysis to verify the persona pulled the right
+sources, and to debug when answers were ungrounded.
+
+## API summary
+
+**Files (reused from the existing Files API):**
+
+| Method | Path | Use |
+|--------|------|-----|
+| `POST` | `/files` | Upload a document (async ingest) |
+| `GET` | `/files/{id}` | Status, ingest progress |
+| `DELETE` | `/files/{id}` | Cascades to all scenario attachments |
+
+**Scenario attachments:**
+
+| Method | Path | Use |
+|--------|------|-----|
+| `GET` | `/scenarios/{scenarioId}/documents` | List attached docs |
+| `POST` | `/scenarios/{scenarioId}/documents/{fileId}/attach` | Attach (idempotent) |
+| `PATCH` | `/scenarios/{scenarioId}/documents/{fileId}` | Toggle `active` / re-order |
+| `DELETE` | `/scenarios/{scenarioId}/documents/{fileId}` | Detach (file kept) |
+
+**Scenario fields:**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `rag_mode` | `"off"` \| `"auto"` \| `"always"` | The mode toggle |
+| `rag_top_k` | integer `1..20` | Chunks per retrieval |
+
+**Meeting introspection:**
+
+| Method | Path | Use |
+|--------|------|-----|
+| `GET` | `/meetings/{id}/retrievals` | Every retrieval that ran during the meeting |
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Documents per scenario | 25 |
+| File size | 50 MB |
+| `rag_top_k` | 1 – 20 (default 5) |
+| Supported file types | `pdf`, `docx`, `doc`, `txt`, `md`, `csv` |
+| Retrieval latency (target) | < 100 ms (pgvector / Pinecone backend) |
+
+## Comparison with other platforms
+
+| | Tavus | Retell | Vapi | OpenAI Assistants | **WaterrAI** |
+|--|-------|--------|------|-------------------|--------------|
+| Resource name | `documents` | `knowledge_base` | `file` / `knowledgeBase` | `vector_store` | `files` + `documents` (attachments) |
+| Mode toggle | strategy (latency only) | none | by KB type | `tool_choice: auto \| required` | **`rag_mode: off \| auto \| always`** |
+| LLM-decides retrieval | — | — | Query Tool | `auto` | `auto` |
+| Forced retrieval | always-on default | always-on default | Custom KB | `required` | `always` |
+| Coexists with custom functions | yes | yes | yes | yes | yes |
+
+## Worked example — a support agent
+
+```bash
+# 1. Upload the FAQ and the product manual.
+curl -X POST https://api.waterr.ai/v1/files \
+  -H "Authorization: Bearer wai_<key>" \
+  -F 'file=@faq.md'
+# → { "data": { "id": "file-faq", … } }
+
+curl -X POST https://api.waterr.ai/v1/files \
+  -H "Authorization: Bearer wai_<key>" \
+  -F 'file=@product-manual.pdf'
+# → { "data": { "id": "file-manual", … } }
+
+# 2. Attach both to the support scenario.
+curl -X POST https://api.waterr.ai/v1/scenarios/{scnId}/documents/file-faq/attach \
+  -H "Authorization: Bearer wai_<key>"
+curl -X POST https://api.waterr.ai/v1/scenarios/{scnId}/documents/file-manual/attach \
+  -H "Authorization: Bearer wai_<key>"
+
+# 3. Force retrieval on every turn — support answers must be grounded.
+curl -X PATCH https://api.waterr.ai/v1/scenarios/{scnId} \
+  -H "Authorization: Bearer wai_<key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "rag_mode": "always", "rag_top_k": 8 }'
+
+# 4. Start a meeting. The persona is now grounded on both docs, every turn.
+curl -X POST https://api.waterr.ai/v1/meetings \
+  -H "Authorization: Bearer wai_<key>" \
+  -d '{ "scenario_id": "{scnId}" }'
+```
+
+For a sales-discovery scenario where retrieval should only happen when the
+prospect asks something specific, use `rag_mode: "auto"` instead — the LLM
+will call `search_knowledge_base` only when relevant, keeping latency low on
+ordinary turns.

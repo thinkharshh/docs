@@ -1,0 +1,443 @@
+---
+title: Custom Functions
+description: "Give your AI persona tools it can call mid-meeting — define once on your account, attach to any scenario."
+---
+
+<Note>
+  Custom functions let the LLM running your scenario invoke **your code**
+  during a live meeting. Define a function once on your account, then attach
+  it to any scenario that needs it. Same code, many conversations.
+</Note>
+
+## When to use this
+
+If your scenario needs the AI to:
+
+- Look up a CRM record, calendar, or knowledge base mid-conversation
+- Place an order, book a slot, or write back to your system
+- Branch the dialogue on real-world state (account tier, inventory, eligibility)
+- Surface UI in the participant's browser without server-side state
+
+…define it as a custom function. Each function is a JSON-Schema declaration the
+LLM sees plus a webhook (or client event) the runtime invokes when the LLM
+emits a `tool_call`.
+
+The wire shape mirrors OpenAI / Tavus tool calling, so anything you've built for
+those platforms ports over with a name change.
+
+## Two-step model: define then attach
+
+Custom functions live in two places:
+
+| | Where | Lifecycle |
+|---|---|---|
+| **Definition** | account-scoped (per membership) | `/custom-functions` |
+| **Attachment** | per-scenario link to a definition | `/scenarios/{id}/custom-functions` |
+
+Define `lookup_account` **once**. Attach it to every scenario that needs it.
+Rotating the webhook secret, fixing a typo in the description, or evolving the
+JSON Schema updates every scenario the function is attached to — no copy-paste.
+
+## How it works at runtime
+
+```
+┌─────────────────┐       1. tool_call         ┌──────────────────┐
+│  LLM (in        │ ─────────────────────────▶ │  meetingMLservice│
+│  meeting)       │                            │  (Pipecat brain) │
+└─────────────────┘                            └────────┬─────────┘
+        ▲                                               │
+        │ 4. tool result                                │ 2. POST /meetings/{id}/tool-calls
+        │    (back into context)                        │    X-Internal-Key
+        │                                               ▼
+        │                                      ┌──────────────────┐
+        │                                      │   CoreBackend    │
+        │                                      │  resolves attach │
+        │                                      │  → signs + relays│
+        │                                      └────────┬─────────┘
+        │                                               │ 3. POST <your webhook>
+        │                                               │    X-Waterr-Signature: sha256=…
+        │                                               ▼
+        │                                      ┌──────────────────┐
+        └──────────────────────────────────────│  Your server     │
+                                               │  (returns JSON)  │
+                                               └──────────────────┘
+```
+
+**Execution modes:**
+
+| Mode | What it does | Use it when |
+|------|-------------|-------------|
+| `webhook` *(default)* | CoreBackend POSTs the arguments to your URL, awaits the JSON response within `timeout_ms`, and returns it to the LLM. Body is HMAC-signed with your secret. | Your tool needs a synchronous result and you want it driven server-side. |
+| `client` | Backend short-circuits with `status: client_handled`. The frontend listens for the tool-call event and handles it directly (the Tavus-style flow). | You want the participant's browser to render UI (open a doc, prefill a form) and report back. |
+
+## Step 1 — Define a function
+
+Create the definition on your account. This is a one-time write.
+
+```bash
+curl -X POST https://api.waterr.ai/v1/custom-functions \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "lookup_account",
+    "description": "Fetch the participant'\''s CRM record so you can reference their plan, MRR, and last contact date.",
+    "parameters_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string",
+          "description": "The participant'\''s account ID (e.g. cus_XXXX)."
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional list of CRM fields to return. Default: all common fields."
+        }
+      },
+      "required": ["account_id"]
+    },
+    "execution_mode": "webhook",
+    "webhook_url": "https://your-app.com/waterr/tools/lookup_account",
+    "webhook_secret": "whsec_replace_me_with_random_64_chars",
+    "timeout_ms": 8000
+  }'
+```
+
+**Response (`201 Created`):**
+
+```json
+{
+  "data": {
+    "id": "fn-uuid",
+    "membership_id": "membership-uuid",
+    "name": "lookup_account",
+    "description": "Fetch the participant's CRM record …",
+    "parameters_schema": { "type": "object", "properties": {…}, "required": ["account_id"] },
+    "execution_mode": "webhook",
+    "webhook_url": "https://your-app.com/waterr/tools/lookup_account",
+    "has_webhook_secret": true,
+    "timeout_ms": 8000,
+    "tool_spec": { "type": "function", "function": {…} },
+    "created_at": "2026-06-18T12:34:56.000Z",
+    "updated_at": "2026-06-18T12:34:56.000Z"
+  }
+}
+```
+
+`webhook_secret` is never returned after creation — only `has_webhook_secret: true`.
+Rotate it by `PATCH`ing the function with a new value, and every attached scenario
+picks up the new secret instantly.
+
+### Validation rules
+
+| Field | Rule |
+|-------|------|
+| `name` | `^[a-zA-Z0-9_-]{1,64}$`. Same constraint OpenAI applies. **Unique per account** — pick once. |
+| `description` | Non-empty. Shown verbatim to the LLM — write it like a prompt. |
+| `parameters_schema` | JSON Schema with `type: "object"`. Per the spec, every parameter you reference in `properties` should also appear in `required`. |
+| `execution_mode` | `webhook` *(default)* or `client`. |
+| `webhook_url` | Required when `execution_mode = "webhook"`. Must be `http://` or `https://`. |
+| `timeout_ms` | Integer in `[1000, 30000]`. Default `10000`. |
+
+## Step 2 — Attach to scenarios
+
+The same definition can power any number of scenarios.
+
+```bash
+# Attach `lookup_account` to a sales-discovery scenario
+curl -X POST https://api.waterr.ai/v1/scenarios/{salesScenarioId}/custom-functions/{fnId}/attach \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "active": true, "position": 0 }'
+
+# Attach the same function to a support scenario
+curl -X POST https://api.waterr.ai/v1/scenarios/{supportScenarioId}/custom-functions/{fnId}/attach \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+**Response (`201 Created`):**
+
+```json
+{
+  "data": {
+    "id": "attachment-uuid",
+    "scenario_id": "sales-scenario-uuid",
+    "custom_function_id": "fn-uuid",
+    "active": true,
+    "position": 0,
+    "custom_function": { "id": "fn-uuid", "name": "lookup_account", … }
+  }
+}
+```
+
+Reattaching the same `(scenario, function)` pair is idempotent — you get
+`200 OK` instead of `201 Created` and the existing row is returned.
+
+### Per-scenario knobs
+
+The attachment carries two fields you can edit per-scenario without touching
+the definition:
+
+| Field | What it does |
+|-------|--------------|
+| `active` | Kill-switch — when `false`, the tool is persisted on the scenario but invisible to the LLM at meeting init. Useful for staging or pausing a misbehaving tool. |
+| `position` | Display order on the manage-tools UI. Runtime ignores this. |
+
+```bash
+# Disable the tool on one scenario only
+curl -X PATCH https://api.waterr.ai/v1/scenarios/{scenarioId}/custom-functions/{fnId} \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "active": false }'
+
+# Detach (definition is kept, attachment is removed)
+curl -X DELETE https://api.waterr.ai/v1/scenarios/{scenarioId}/custom-functions/{fnId} \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+## Webhook contract
+
+When the LLM emits a tool call, CoreBackend POSTs this payload to your
+`webhook_url`:
+
+```json
+{
+  "id": "9b6c…",
+  "type": "tool_call",
+  "created_at": "2026-06-18T12:35:01.000Z",
+  "data": {
+    "function_id": "fn-uuid",
+    "function_name": "lookup_account",
+    "arguments": {
+      "account_id": "cus_4f8a",
+      "fields": ["name", "plan", "mrr"]
+    },
+    "tool_call_id": "call_abc123",
+    "meeting_id": "meeting-uuid",
+    "scenario_id": "scenario-uuid"
+  }
+}
+```
+
+**Headers:**
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Waterr-CustomFunction/1.0` |
+| `X-Waterr-Event` | `tool_call` |
+| `X-Waterr-Function-Id` | The function UUID |
+| `X-Waterr-Function-Name` | The declared `name` |
+| `X-Waterr-Signature` | `sha256=<hex>` HMAC of the raw body — see below |
+
+### Respond with the tool result
+
+Return any JSON body within `timeout_ms`. **Your response body becomes the
+tool result** the LLM sees next turn.
+
+```json
+{
+  "name": "Aanya Iyer",
+  "plan": "Pro Annual",
+  "mrr_usd": 299,
+  "last_contact": "2026-05-30",
+  "open_tickets": 0
+}
+```
+
+If the body isn't valid JSON, the runtime wraps it as `{ "result": "<your-text>" }`
+so the LLM still sees something. Responses larger than 256 KB are truncated.
+
+**Non-2xx responses** are returned to the LLM as
+`{ status: "error", error_code: "http_error", http_status: 500, ... }` — the
+LLM is told the tool failed and can recover (apologize, retry, branch).
+
+## Verify the signature
+
+Every request includes an `X-Waterr-Signature` header — the HMAC-SHA256 of the
+raw body, signed with your `webhook_secret`.
+
+```
+X-Waterr-Signature: sha256=4c1f8a…
+```
+
+Verify it before trusting the payload (Node.js):
+
+```js
+const crypto = require('crypto');
+
+app.post('/waterr/tools/lookup_account',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['x-waterr-signature'];
+    const expected =
+      'sha256=' +
+      crypto
+        .createHmac('sha256', process.env.WATERR_LOOKUP_ACCOUNT_SECRET)
+        .update(req.body)
+        .digest('hex');
+
+    if (
+      !signature ||
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
+      return res.status(401).send('invalid signature');
+    }
+
+    const event = JSON.parse(req.body);
+    const account = await lookupCrm(event.data.arguments.account_id);
+    res.json(account);
+  }
+);
+```
+
+<Warning>
+  Verify using the **raw** request body, not a re-stringified JSON object. Body
+  parsers like `express.json()` mutate whitespace and break the HMAC.
+</Warning>
+
+If you don't set `webhook_secret`, requests are still signed using a
+per-function fallback (`function:<function_id>`) so the field is always
+non-empty. Set your own secret to make rotation possible.
+
+## Client-mode functions
+
+For tools that should be handled in the participant's browser — opening a
+doc, prefilling a form, navigating tabs — set `execution_mode: "client"` and
+**omit** the webhook URL.
+
+The backend short-circuits any tool call to a client-mode function with:
+
+```json
+{
+  "name": "open_pricing_page",
+  "status": "client_handled",
+  "function_id": "fn-uuid"
+}
+```
+
+The frontend SDK is responsible for receiving the tool-call event over the
+Daily room data channel and responding to the LLM directly. (Web SDK
+integration is rolling out — until then, prefer webhook mode for production use.)
+
+## API summary
+
+**Definitions (account-scoped):**
+
+| Method | Path | What |
+|--------|------|------|
+| `GET` | `/custom-functions` | List every definition on your account |
+| `GET` | `/custom-functions/{id}` | Fetch one |
+| `POST` | `/custom-functions` | Create a definition |
+| `PATCH` | `/custom-functions/{id}` | Edit the definition — propagates to every attached scenario |
+| `DELETE` | `/custom-functions/{id}` | Delete (cascades to all attachments) |
+
+**Attachments (per-scenario):**
+
+| Method | Path | What |
+|--------|------|------|
+| `GET` | `/scenarios/{scenarioId}/custom-functions` | List attached functions, with per-scenario `active`/`position` |
+| `POST` | `/scenarios/{scenarioId}/custom-functions/{fnId}/attach` | Attach a definition to this scenario (idempotent) |
+| `PATCH` | `/scenarios/{scenarioId}/custom-functions/{fnId}` | Toggle `active` or change `position` for this scenario |
+| `DELETE` | `/scenarios/{scenarioId}/custom-functions/{fnId}` | Detach (definition is kept) |
+
+Active attachments are also surfaced under `CustomFunctions[]` on every
+`GET /scenarios/{id}` response, so a single fetch is enough to render the
+manage-tools UI.
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| `name` length | 64 chars |
+| `name` uniqueness | per account |
+| Per-tool `timeout_ms` | 1 s – 30 s (default 10 s) |
+| Webhook response size | 256 KB (truncated past this) |
+| Webhook delivery retries | None today — failed calls surface to the LLM as an `http_error` |
+
+## Comparison with Tavus
+
+If you're porting from Tavus tool calling:
+
+| | Tavus | Waterr |
+|---|-------|--------|
+| Attached to | persona | **account → attached to scenarios (M:N)** |
+| Define once, reuse | yes | yes |
+| Tool spec | `{type:"function", function:{name,description,parameters}}` | identical |
+| Default callback | client event only | **webhook** (synchronous round-trip) |
+| Client-event mode | yes | yes (`execution_mode: "client"`) |
+| Signing | none | `X-Waterr-Signature` HMAC-SHA256 per call |
+| Result return | undocumented | webhook response body **is** the tool result |
+| Per-scenario kill-switch | n/a | `active` flag on the attachment |
+
+## Worked example — booking a meeting
+
+A creator runs both a **sales discovery** scenario and a **support intake**
+scenario. Both need to surface availability and let the AI book follow-ups.
+
+```bash
+# 1. Define list_slots once on the account.
+curl -X POST https://api.waterr.ai/v1/custom-functions \
+  -H "Authorization: Bearer wai_<key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "list_slots",
+    "description": "List the user'\''s next 7 days of bookable 30-min slots.",
+    "parameters_schema": {
+      "type": "object",
+      "properties": {
+        "timezone": { "type": "string", "description": "IANA tz, e.g. Asia/Kolkata" }
+      },
+      "required": ["timezone"]
+    },
+    "webhook_url": "https://your-app.com/waterr/list_slots"
+  }'
+# → { "data": { "id": "fn-list-slots", … } }
+
+# 2. Define book_slot once on the account.
+curl -X POST https://api.waterr.ai/v1/custom-functions \
+  -H "Authorization: Bearer wai_<key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "book_slot",
+    "description": "Book a slot the user just confirmed. Call ONLY after they say yes to a specific time.",
+    "parameters_schema": {
+      "type": "object",
+      "properties": {
+        "slot_iso": { "type": "string", "description": "ISO-8601 start time" },
+        "title":    { "type": "string" }
+      },
+      "required": ["slot_iso", "title"]
+    },
+    "webhook_url": "https://your-app.com/waterr/book_slot"
+  }'
+# → { "data": { "id": "fn-book-slot", … } }
+
+# 3. Attach both to the sales scenario.
+curl -X POST https://api.waterr.ai/v1/scenarios/{salesScenarioId}/custom-functions/fn-list-slots/attach \
+  -H "Authorization: Bearer wai_<key>"
+curl -X POST https://api.waterr.ai/v1/scenarios/{salesScenarioId}/custom-functions/fn-book-slot/attach \
+  -H "Authorization: Bearer wai_<key>"
+
+# 4. Attach the same two to the support scenario.
+curl -X POST https://api.waterr.ai/v1/scenarios/{supportScenarioId}/custom-functions/fn-list-slots/attach \
+  -H "Authorization: Bearer wai_<key>"
+curl -X POST https://api.waterr.ai/v1/scenarios/{supportScenarioId}/custom-functions/fn-book-slot/attach \
+  -H "Authorization: Bearer wai_<key>"
+```
+
+Now if your calendar API moves to a new URL, you `PATCH` the **two** function
+definitions once and both scenarios pick it up.
+
+During a meeting on either scenario:
+
+1. User: "Can we set up a follow-up sometime this week?"
+2. LLM emits `tool_call: list_slots(timezone="Asia/Kolkata")`.
+3. Your webhook returns `[{slot:"2026-06-20T10:00:00+05:30"}, …]`.
+4. LLM proposes the slots verbally.
+5. User: "Friday at 10 works."
+6. LLM emits `tool_call: book_slot(slot_iso="2026-06-20T10:00:00+05:30", title="Follow-up")`.
+7. Your webhook books it and returns `{ "ok": true, "booking_id": "bk_…" }`.
+8. LLM confirms verbally: "Booked — you'll get a calendar invite shortly."
+
+No frontend changes, no SDK needed. The conversation just works.

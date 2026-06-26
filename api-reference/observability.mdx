@@ -1,0 +1,286 @@
+---
+title: Observability & Tracing
+description: "Stream STT → LLM → TTS spans, agentic LLM calls, and token usage to any OpenTelemetry-compatible backend — Langfuse, Honeycomb, Grafana, New Relic, Datadog, SigNoz, or Phoenix."
+---
+
+<Note>
+  This guide applies to teams running **meetingMLservice** (the Pipecat-based
+  meeting engine). The Waterr.ai cloud product ships with internal tracing
+  already wired — this page is for developers self-hosting or contributing to
+  the service who want spans flowing to their own observability backend.
+</Note>
+
+## How it works
+
+meetingMLservice uses the **OpenTelemetry Protocol (OTLP) over HTTP** to ship
+traces. That means it works with any OTLP-compatible backend — the integration
+is not tied to a single vendor. The same three env vars switch between
+providers:
+
+```bash
+ENABLE_TRACING=true
+OTEL_EXPORTER_OTLP_ENDPOINT=<your provider's OTLP endpoint>
+OTEL_EXPORTER_OTLP_HEADERS=<your provider's auth header>
+```
+
+Restart the service and traces start flowing. See [Provider configurations](#provider-configurations)
+below for the exact endpoint + header per backend.
+
+## What gets traced
+
+Once tracing is enabled, every meeting emits structured spans for:
+
+- **Pipeline stages** — STT, LLM, and TTS latency + token usage per turn
+  (Pipecat's built-in `enable_tracing` on the `PipelineTask`)
+- **Agentic LLM calls** — `agentic.llm.call` for every task-detection /
+  orchestration call, with full input messages and JSON output
+- **Agentic flow events** — `agentic.process_user_message`,
+  `agentic.task_detected`, `agentic.task_created`, content-save spans
+
+Standard GenAI semantic-convention attributes are attached so backends that
+understand OTel GenAI (Langfuse, Phoenix, Honeycomb, etc.) render them as
+proper LLM generations:
+
+```
+gen_ai.system            -> "openai" | "google" | "anthropic" | ...
+gen_ai.request.model     -> e.g. "gpt-4o-mini"
+gen_ai.operation.name    -> "chat"
+gen_ai.usage.input_tokens
+gen_ai.usage.output_tokens
+tools.count
+function_calls.count
+agentic.task_detected    -> true | false
+agentic.task_title       -> "<detected task title>"
+```
+
+## Provider configurations
+
+Pick your backend, copy the env block into `meetingMLservice/.env` (local) or
+your deploy secrets (prod), restart the service. The OTel deps
+(`opentelemetry-api`, `opentelemetry-sdk`,
+`opentelemetry-exporter-otlp-proto-http`) are already pinned in
+`requirements.txt` — no extra `pip install` needed.
+
+<Tabs>
+  <Tab title="Langfuse">
+    Best for: LLM-native observability with prompt/output replay, evals,
+    datasets, and session grouping.
+
+    ```bash
+    ENABLE_TRACING=true
+
+    # EU project
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://cloud.langfuse.com/api/public/otel
+    # US project: https://us.cloud.langfuse.com/api/public/otel
+    # Self-hosted:  https://<your-host>/api/public/otel
+
+    # Authorization=Basic <base64(public_key:secret_key)>
+    OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic cGstbGYteHh4...
+    ```
+
+    Build the header value:
+
+    ```bash
+    echo -n "pk-lf-xxxx:sk-lf-xxxx" | base64
+    ```
+
+    Get keys from **Project Settings → API Keys**. View traces at
+    [cloud.langfuse.com](https://cloud.langfuse.com) → **Traces**.
+  </Tab>
+
+  <Tab title="Honeycomb">
+    Best for: high-cardinality query workflows, BubbleUp anomaly detection,
+    long retention.
+
+    ```bash
+    ENABLE_TRACING=true
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+    OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=<your-ingest-key>
+    # optional: route to a specific dataset
+    # OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=<key>,x-honeycomb-dataset=waterr-meeting
+    ```
+
+    EU customers should use `https://api.eu1.honeycomb.io`. Get keys from
+    **Environment Settings → API Keys**.
+  </Tab>
+
+  <Tab title="Grafana Cloud">
+    Best for: teams already on Grafana/Prometheus, unified traces + metrics +
+    logs.
+
+    ```bash
+    ENABLE_TRACING=true
+    # Region is part of the URL — find yours in Grafana Cloud → My Account
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-us-east-0.grafana.net/otlp
+
+    # Authorization=Basic <base64(instance_id:cloud_access_policy_token)>
+    OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic <base64>
+    ```
+
+    Build the header:
+
+    ```bash
+    echo -n "<instance_id>:<token>" | base64
+    ```
+
+    Generate a Cloud Access Policy token with the `traces:write` scope.
+  </Tab>
+
+  <Tab title="New Relic">
+    Best for: full-stack APM teams who want LLM traces alongside service
+    metrics.
+
+    ```bash
+    ENABLE_TRACING=true
+    # US data centers
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net
+    # EU: https://otlp.eu01.nr-data.net
+
+    OTEL_EXPORTER_OTLP_HEADERS=api-key=<your-license-key>
+    ```
+
+    Use a **License key** (a.k.a. ingest key), not a User API key. View
+    traces under **APM & Services → Distributed tracing**.
+  </Tab>
+
+  <Tab title="Datadog">
+    Datadog ingests OTLP via the **Datadog Agent**, not via its public cloud
+    intake. Run the Agent (sidecar or local daemon) with the OTLP HTTP
+    receiver enabled, then point the service at it:
+
+    ```bash
+    ENABLE_TRACING=true
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    # No auth header — the Agent forwards using DD_API_KEY from its own env
+    ```
+
+    Agent config (`datadog.yaml`):
+
+    ```yaml
+    otlp_config:
+      receiver:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4318
+    ```
+  </Tab>
+
+  <Tab title="SigNoz">
+    Best for: open-source / self-hosted full observability stack (traces +
+    metrics + logs).
+
+    ```bash
+    ENABLE_TRACING=true
+    # SigNoz Cloud — region is part of the URL
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.us.signoz.cloud:443
+    OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=<your-token>
+
+    # Self-hosted: point at the OTel collector you deployed alongside SigNoz
+    # OTEL_EXPORTER_OTLP_ENDPOINT=http://<signoz-otel-collector>:4318
+    ```
+  </Tab>
+
+  <Tab title="Phoenix (Arize)">
+    Best for: LLM evals and tracing in one place, especially for RAG-heavy
+    pipelines.
+
+    ```bash
+    ENABLE_TRACING=true
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://app.phoenix.arize.com/v1/traces
+    OTEL_EXPORTER_OTLP_HEADERS=api_key=<your-phoenix-api-key>
+    ```
+
+    For self-hosted Phoenix, point at your collector's `/v1/traces` endpoint
+    and omit the auth header.
+  </Tab>
+
+  <Tab title="Other OTLP backend">
+    Any backend that accepts OTLP/HTTP works — Jaeger, Tempo (standalone),
+    Uptrace, Logfire, Helicone, Braintrust, or your own OTel Collector.
+
+    ```bash
+    ENABLE_TRACING=true
+    OTEL_EXPORTER_OTLP_ENDPOINT=https://<your-otlp-endpoint>
+    # Header format is "Header=Value" (single line, comma-separated for multiple)
+    OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
+    ```
+
+    Check your backend's docs for the exact endpoint path and auth header —
+    most providers publish their OTLP ingest URL on a "Send traces via
+    OpenTelemetry" docs page.
+  </Tab>
+</Tabs>
+
+<Tip>
+  Want traces in **two places at once** (e.g. Langfuse for LLM debugging +
+  Datadog for ops alerts)? Run an [OpenTelemetry
+  Collector](https://opentelemetry.io/docs/collector/) as a sidecar, point
+  meetingMLservice at the collector, and fan out from there. The service only
+  exports to one OTLP endpoint — multi-destination is a collector concern.
+</Tip>
+
+## How it's wired
+
+You don't need to write any tracing code — the integration is built into the
+pipeline factories. For reference:
+
+```python
+# services/daily/pipeline_service.py
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from pipecat.utils.tracing.setup import setup_tracing
+
+otlp_exporter = OTLPSpanExporter()  # reads OTEL_EXPORTER_OTLP_* from env
+setup_tracing(service_name="pipecat-demo", exporter=otlp_exporter)
+
+task = PipelineTask(
+    pipeline,
+    enable_tracing=ENABLE_TRACING,   # turns STT/LLM/TTS spans on
+    ...
+)
+```
+
+Agentic code creates its own child spans on the same provider — see
+`services/agentic/llm_helper.py` and `services/agentic/agentic_flow_manager.py`.
+
+You can also tee spans to stdout while debugging by setting
+`OTEL_CONSOLE_EXPORT=true`.
+
+## Verify
+
+Start a meeting against your dev instance, then in your backend:
+
+1. Look for traces tagged with service name `pipecat-demo` (or whatever
+   `service_name` you passed to `setup_tracing`).
+2. You should see one trace per meeting with nested spans for each pipeline
+   stage and agentic call.
+
+If nothing shows up:
+
+- **`ENABLE_TRACING` is empty.** `os.getenv("ENABLE_TRACING")` returns `None`
+  if the var isn't set. Set it to `true`.
+- **Wrong region / endpoint.** Most providers split EU and US data centers;
+  using the wrong one returns 401 or 404.
+- **Auth header malformed.** Must be `Header=Value` (equals sign, not colon),
+  on a single line. Multiple headers are comma-separated:
+  `key1=value1,key2=value2`.
+- **Enable console export.** Set `OTEL_CONSOLE_EXPORT=true` and watch the
+  service logs — if spans print there but not in your backend, the issue is
+  auth or network egress.
+
+## Security notes
+
+- **Never commit keys.** Inject `OTEL_EXPORTER_OTLP_HEADERS` via your deploy
+  secret store, not `.env` in git.
+- **PII in spans.** Agentic spans capture full input messages and LLM output
+  for debuggability. If your meetings carry sensitive data (PHI, payment info,
+  etc.), keep tracing off in prod or point it at a backend inside your VPC
+  (self-hosted Langfuse, SigNoz, Phoenix, or an internal collector).
+- **Rotate on exposure.** All providers above let you revoke ingest keys from
+  their settings UI; rotate immediately if a `.env` file leaks.
+
+## Scope
+
+Only **meetingMLservice** emits OTLP spans today. CoreBackend (Node.js REST
+API) and ModelCloudService (LLM routing) are not yet instrumented — if you
+need full request-tracing across all three, you'll need to add OTLP exporters
+there as a follow-up.

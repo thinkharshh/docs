@@ -50,6 +50,7 @@
               "capabilities/multi-language",
               "capabilities/deep-thinking",
               "capabilities/web-search",
+              "capabilities/participant-memory",
               "capabilities/social",
               "capabilities/notifications"
             ]
@@ -167,13 +168,15 @@
             "group": "Guides",
             "pages": [
               "api-reference/prompting-guide",
-              "api-reference/examples"
+              "api-reference/examples",
+              "api-reference/observability"
             ]
           },
           {
             "group": "Integrations",
             "pages": [
               "api-reference/mcp",
+              "api-reference/custom-functions",
               "api-reference/webhooks"
             ]
           },
@@ -198,7 +201,15 @@
     "logoHeight": 64,
     "css": "/style.css"
   },
-  "navbar": {},
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/waterrai",
+        "icon": "github"
+      }
+    ]
+  },
   "footer": {
     "socials": {
       "x": "https://x.com/waterr_ai",

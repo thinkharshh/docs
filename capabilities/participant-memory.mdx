@@ -1,0 +1,101 @@
+---
+title: Participant Memory
+description: "Let your AI persona remember each signed-in participant across sessions of the same scenario."
+---
+
+Participant Memory gives your AI a sense of continuity. When the same person comes back for a second-round interview, a follow-up coaching call, or another sales pitch, the AI picks up where things left off instead of starting from scratch.
+
+## How it works
+
+When a meeting ends, Waterr automatically distills the transcript into a short, factual memory about the participant — what they said, what they decided, what they cared about, what was left unfinished. Nothing about the persona's own instructions, no small talk, no PII the participant didn't volunteer themselves.
+
+The next time that same signed-in participant joins the **same scenario**, those memories are injected into the AI's system prompt before the call starts. The AI uses them as ambient context — it doesn't recite them back, it just *acts* as if it remembers.
+
+Memory is scoped per `(participant, scenario)`. The same person joining a different scenario starts fresh — there's no cross-scenario leakage.
+
+<Note>
+Only **signed-in participants** are remembered in v1. Guests joining through public links or embeds aren't remembered — the AI treats every embed session as a clean slate.
+</Note>
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Multi-round Interviews" icon="user-tie">
+    Round 2 picks up the candidate's experience, projects, and unresolved questions from Round 1 without re-asking.
+  </Card>
+  <Card title="Coaching & Therapy" icon="brain">
+    The AI coach remembers goals, blockers, and what the participant tried since the last session — real continuity, no notes to upload.
+  </Card>
+  <Card title="Sales Discovery" icon="handshake">
+    A returning buyer's role, objections, and the deal stage carry forward, so the AI doesn't re-qualify the same lead twice.
+  </Card>
+  <Card title="Onboarding Journeys" icon="graduation-cap">
+    A multi-week training program remembers what each learner has covered, where they got stuck, and what to focus on next.
+  </Card>
+</CardGroup>
+
+## Enabling Participant Memory
+
+<Steps>
+  <Step title="Open your scenario">
+    Navigate to the scenario you want participants to be remembered in.
+  </Step>
+  <Step title="Go to Settings">
+    Click the **Settings** tab.
+  </Step>
+  <Step title="Turn on Remember Participants">
+    Under **Participant Memory**, toggle on **Remember Participants**.
+  </Step>
+</Steps>
+
+That's it. The next time a signed-in participant has a session in this scenario, Waterr writes a memory at the end. From their *second* session onward, the AI starts the call already knowing them.
+
+## What gets remembered
+
+The post-meeting distillation captures durable, useful context:
+
+- Facts the participant shared (role, company, project they're working on)
+- Stated preferences and decisions
+- Names and relationships they mentioned
+- Loose threads — questions they didn't finish answering, things they said they'd think about
+
+It deliberately skips:
+
+- Small talk and pleasantries
+- Anything already in the persona's own instructions
+- PII the participant didn't volunteer themselves
+
+Each memory is capped at roughly 500 tokens. On read, Waterr injects up to **~4,000 tokens** of memory — newest first — into the system prompt. Older memories beyond that ceiling are dropped from injection but remain stored.
+
+## Guiding how the AI uses memory
+
+You don't need to write special prompts to *make* memory work — that's automatic. But you can steer **how** the AI uses it in your [meeting script](/customization/meeting-script):
+
+```markdown
+## Using Past Sessions
+- Don't open the call by listing what you remember -- that's awkward
+- If they bring up something from before, acknowledge it naturally
+- If they're stuck on a goal we set last time, gently revisit it
+- Treat the memory as background knowledge, not a script
+```
+
+<Tip>
+Memory works best in scenarios designed for repeat sessions — coaching programs, multi-round interviews, ongoing customer conversations. For one-shot scenarios, leaving it off keeps things simpler.
+</Tip>
+
+## Privacy & data handling
+
+- **Encryption at rest** — memory text is AES-256 encrypted in the database, same as transcripts.
+- **Opt-in per scenario** — off by default. Nothing is written unless you toggle it on.
+- **Scenario-scoped** — memory from Scenario A is never visible to Scenario B, even for the same participant.
+- **Authenticated only** — no anonymous participant fingerprinting. If there's no signed-in identity, nothing is written.
+
+For broader privacy controls, see [Privacy](/security/privacy) and [Data Encryption](/security/data-encryption).
+
+## Limitations (v1)
+
+<Warning>
+- **No creator-facing memory editor yet.** You can turn the feature on/off per scenario, but you can't review or hand-edit individual memory entries from the dashboard. Coming in v2.
+- **Embed participants aren't remembered.** Public-link and embed joins are unauthenticated; memory only applies to signed-in users.
+- **One scenario at a time.** A participant's memory in *Sales Discovery v2* is independent from their memory in *Sales Discovery v1* — even if the scenarios are nearly identical.
+</Warning>
