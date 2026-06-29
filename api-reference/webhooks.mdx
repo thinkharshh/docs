@@ -1,134 +1,500 @@
 ---
 title: Webhooks
-description: "Receive a signed POST to your server when a session's analysis is ready."
+description: "Per-account, signed, retried webhooks. Configure once, receive every event that fires on your account, verify with a single shared secret."
 ---
 
 <Note>
-  **Available today:** `session.analysis_complete`. Other events (`session.ended`,
-  `session.transcript_ready`, `recording.ready`) are not yet delivered — use
-  [polling](/api-reference/session-lifecycle) or [email notifications](/capabilities/notifications) for those.
+  **Available today:** `session.analysis_complete`, `meeting.created`,
+  `meeting.ended`, `transcript.ready`, `recording.ready`,
+  `participant.joined`, `participant.left`, `analysis.failed` — all over the
+  v2 delivery pipeline (signed with replay protection, durable retries,
+  replay API). See [Events](#events) for the full catalog and payload
+  schemas.
 </Note>
 
-## Setup
+## Concepts
 
-Configure a webhook URL for your scenario via the **Settings** tab or the session
-options API:
+A **webhook endpoint** is a URL you own that Waterr POSTs events to. You
+create one per account in the dashboard or via the API. Each endpoint has:
+
+- A `url` (HTTPS required in production)
+- A `signing_secret` (`whsec_…`) shown **once** at create-time — store it
+  immediately
+- A `subscribed_events` allowlist (`["*"]` = all events)
+- An `enabled` flag for soft-pause
+
+Every event fires to **every** matching endpoint on your account, with
+independent retries and an audit log per delivery.
+
+## Quickstart
+
+### 1. Create an endpoint
 
 ```bash
-curl -X PUT https://api.waterr.ai/v1/scenarios/{scenarioId}/session-options \
+curl -X POST https://api.waterr.ai/v1/webhooks/endpoints \
   -H "Authorization: Bearer wai_<your_key>" \
   -H "Content-Type: application/json" \
   -d '{
-    "webhook_url": "https://your-app.com/webhooks/waterr"
+    "url": "https://your-app.com/webhooks/waterr",
+    "description": "prod CRM sync",
+    "subscribed_events": ["*"]
   }'
 ```
 
-Once set, every analysis that completes for a meeting on that scenario will fire
-a `session.analysis_complete` POST to your URL.
+Response (the only time `signing_secret` is ever returned):
 
-## Event payload
+```json
+{
+  "id": "8c1a…",
+  "url": "https://your-app.com/webhooks/waterr",
+  "description": "prod CRM sync",
+  "signing_secret": "whsec_aB3…",
+  "subscribed_events": ["*"],
+  "enabled": true,
+  "created_at": "2026-06-27T10:00:00.000Z"
+}
+```
 
-Every webhook POSTs a JSON body with this envelope:
+<Warning>
+  `signing_secret` is shown **once**. Save it to your secret store immediately
+  — there's no way to retrieve it later. If you lose it, call
+  `POST /v1/webhooks/endpoints/:id/rotate-secret` to issue a new one.
+</Warning>
+
+### 2. Verify incoming requests
+
+Every POST carries a `Waterr-Signature` header:
+
+```
+Waterr-Signature: t=1751025600,v1=4c1f8a…
+```
+
+`t` is a Unix timestamp; `v1` is HMAC-SHA256 of `${t}.${rawBody}` with your
+signing secret. Verify both the signature and the timestamp freshness (5 min
+tolerance is what we recommend) before trusting the payload.
+
+<Tabs>
+  <Tab title="Node.js (Express)">
+    ```js
+    const crypto = require('crypto');
+
+    const TOLERANCE = 5 * 60;
+    const SECRET = process.env.WATERR_WEBHOOK_SECRET; // your whsec_…
+
+    function verify(rawBody, header) {
+      if (!header) return false;
+      const parts = Object.fromEntries(
+        header.split(',').map((p) => p.trim().split('='))
+      );
+      const t = Number(parts.t);
+      if (!t || Math.abs(Date.now() / 1000 - t) > TOLERANCE) return false;
+      const expected = crypto
+        .createHmac('sha256', SECRET)
+        .update(`${t}.${rawBody}`)
+        .digest('hex');
+      return crypto.timingSafeEqual(
+        Buffer.from(parts.v1),
+        Buffer.from(expected)
+      );
+    }
+
+    app.post(
+      '/webhooks/waterr',
+      express.raw({ type: 'application/json' }),
+      (req, res) => {
+        if (!verify(req.body, req.headers['waterr-signature'])) {
+          return res.status(401).send('invalid signature');
+        }
+        const event = JSON.parse(req.body);
+        // handle event.event === 'session.analysis_complete'
+        res.sendStatus(200);
+      }
+    );
+    ```
+  </Tab>
+
+  <Tab title="Python (Flask)">
+    ```python
+    import hmac, hashlib, os, time
+    from flask import Flask, request, abort
+
+    SECRET = os.environ["WATERR_WEBHOOK_SECRET"]
+    TOLERANCE = 5 * 60
+
+    def verify(raw_body: bytes, header: str | None) -> bool:
+        if not header: return False
+        parts = dict(p.split("=", 1) for p in header.split(","))
+        try: t = int(parts["t"])
+        except (KeyError, ValueError): return False
+        if abs(time.time() - t) > TOLERANCE: return False
+        expected = hmac.new(
+            SECRET.encode(),
+            f"{t}.".encode() + raw_body,
+            hashlib.sha256,
+        ).hexdigest()
+        return hmac.compare_digest(parts.get("v1", ""), expected)
+
+    app = Flask(__name__)
+
+    @app.post("/webhooks/waterr")
+    def waterr_webhook():
+        if not verify(request.get_data(), request.headers.get("Waterr-Signature")):
+            abort(401)
+        event = request.get_json()
+        # handle event["event"] == "session.analysis_complete"
+        return "", 200
+    ```
+  </Tab>
+
+  <Tab title="Go">
+    ```go
+    package main
+
+    import (
+        "crypto/hmac"
+        "crypto/sha256"
+        "encoding/hex"
+        "io"
+        "net/http"
+        "os"
+        "strconv"
+        "strings"
+        "time"
+    )
+
+    var secret = []byte(os.Getenv("WATERR_WEBHOOK_SECRET"))
+    const tolerance = 5 * 60
+
+    func verify(body []byte, header string) bool {
+        if header == "" { return false }
+        var t int64; var sig string
+        for _, p := range strings.Split(header, ",") {
+            kv := strings.SplitN(strings.TrimSpace(p), "=", 2)
+            if len(kv) != 2 { continue }
+            switch kv[0] {
+            case "t":  t, _ = strconv.ParseInt(kv[1], 10, 64)
+            case "v1": sig = kv[1]
+            }
+        }
+        if t == 0 || abs(time.Now().Unix()-t) > tolerance { return false }
+        mac := hmac.New(sha256.New, secret)
+        mac.Write([]byte(strconv.FormatInt(t, 10) + "."))
+        mac.Write(body)
+        return hmac.Equal([]byte(sig), []byte(hex.EncodeToString(mac.Sum(nil))))
+    }
+
+    func handler(w http.ResponseWriter, r *http.Request) {
+        body, _ := io.ReadAll(r.Body)
+        if !verify(body, r.Header.Get("Waterr-Signature")) {
+            w.WriteHeader(401); return
+        }
+        // handle event
+        w.WriteHeader(200)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  Always use the **raw** request body — `express.json()`, `request.get_json()`,
+  etc. mutate whitespace and break the HMAC.
+</Warning>
+
+## Event envelope
+
+Every webhook POSTs a JSON body with this shape:
 
 ```json
 {
   "id": "9b6c…",
   "event": "session.analysis_complete",
   "created_at": "2026-05-31T09:25:00.000Z",
-  "data": {
-    "meeting_id": "meeting-uuid",
-    "scenario_id": "scenario-uuid",
-    "analysis": {
-      "analysis_id": "analysis-uuid",
-      "average_score": 82,
-      "total_score": 412,
-      "summary": "The candidate demonstrated strong …",
-      "call_summary": "30-minute system design conversation …",
-      "strengths": "…",
-      "growth_areas": "…",
-      "recommendations": "…",
-      "goal_results": [
-        { "goal": "Problem Solving", "result": { "score": 4, "feedback": "…" } }
-      ],
-      "highlights": [
-        { "title": "Identified the bottleneck early", "timestamp": 412 }
-      ],
-      "conversation_length": 187
-    }
-  }
+  "data": { "...event-specific..." }
 }
 ```
 
-The `data.analysis` object mirrors what `GET /analyses/meeting/{meetingId}` returns,
-so any code that already consumes the analysis API works unchanged.
-
-## Verifying the signature
-
-Every request includes a `X-Waterr-Signature` header containing an HMAC-SHA256
-of the raw request body, signed with your webhook secret.
-
-```
-X-Waterr-Signature: sha256=4c1f8a…
-```
-
-Verify it before trusting the payload (Node.js):
-
-```js
-const crypto = require('crypto');
-
-app.post('/webhooks/waterr', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-waterr-signature'];
-  const expected =
-    'sha256=' +
-    crypto
-      .createHmac('sha256', process.env.WATERR_WEBHOOK_SECRET)
-      .update(req.body)
-      .digest('hex');
-
-  if (
-    !signature ||
-    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-  ) {
-    return res.status(401).send('invalid signature');
-  }
-
-  const event = JSON.parse(req.body);
-  // ... handle event.event === 'session.analysis_complete'
-  res.sendStatus(200);
-});
-```
-
-<Warning>
-  Verify using the **raw** request body, not a re-stringified JSON object. Body
-  parsers like `express.json()` will mutate whitespace and break the HMAC.
-</Warning>
-
-## Delivery behavior
-
-- Fired once per completed analysis, fire-and-forget.
-- Timeout: **5 seconds**. Responses are not parsed — any 2xx is success.
-- **No retries** in the current MVP. If your endpoint is down when the analysis
-  completes, you'll miss that event. Until retries ship, treat the webhook as a
-  *fast path* and keep polling `GET /analyses/meeting/{meetingId}` as a backstop
-  for high-stakes flows.
-- Failures are logged on our side with the response status (or error) for debugging.
+`id` is **stable across retries** — use it as your dedupe key. If you've
+processed event `id=9b6c…` once, ignore any subsequent delivery with the same
+id.
 
 ## Events
 
 | Event | Status | Fires when |
 |-------|--------|------------|
+| `meeting.created`           | **Available** | A meeting row is created via `POST /v1/meetings` |
+| `meeting.ended`             | **Available** | Meeting's `ended_at` is set (before analysis runs) |
+| `participant.joined`        | **Available** | A participant's `joined_at` transitions from null → set |
+| `participant.left`          | **Available** | A participant's `left_at` transitions from null → set |
+| `transcript.ready`          | **Available** | Full sentenced transcript is persisted |
+| `recording.ready`           | **Available** | Video recording row is created (Daily.co finished upload) |
 | `session.analysis_complete` | **Available** | AI analysis with goal scores is saved |
-| `session.ended`             | Planned       | Meeting ends (before analysis runs) |
-| `session.transcript_ready`  | Planned       | Full transcript is finalized |
-| `recording.ready`           | Planned       | Video recording is uploaded |
+| `analysis.failed`           | **Available** | Analysis pipeline threw an error |
+| `meeting.started`           | Planned       | Not implemented yet — see [coming soon](#coming-soon) |
 
-## Current alternatives (for the planned events)
+### Common envelope
 
-<CardGroup cols={2}>
-  <Card title="Poll for analysis" icon="rotate" href="/api-reference/session-lifecycle">
-    For the events that don't fire yet, poll `GET /analyses/meeting/{meetingId}` every 5–10 seconds.
-  </Card>
-  <Card title="Email notifications" icon="envelope" href="/capabilities/notifications">
-    Add email addresses in scenario settings to receive analysis results automatically.
-  </Card>
-</CardGroup>
+Every event uses the same envelope. `data.meeting_id` and `data.scenario_id`
+are always present so a single handler can route by `event` + `meeting_id`
+without extra lookups.
+
+```json
+{
+  "id": "9b6c…",
+  "event": "<event_type>",
+  "created_at": "2026-06-27T09:25:00.000Z",
+  "data": {
+    "meeting_id": "meeting-uuid",
+    "scenario_id": "scenario-uuid",
+    "...": "event-specific fields"
+  }
+}
+```
+
+### Event-specific payloads
+
+<Tabs>
+  <Tab title="meeting.created">
+    Fires once when a meeting is created via the API. Lightweight — hydrate
+    the rest via `GET /v1/meetings/:id`.
+    ```json
+    {
+      "event": "meeting.created",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="meeting.ended">
+    Fires when the server marks a meeting `ended_at`. Always BEFORE
+    `transcript.ready` and `session.analysis_complete`.
+    ```json
+    {
+      "event": "meeting.ended",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "ended_at": "2026-06-27T09:24:00.000Z",
+        "duration_seconds": 187
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="participant.joined">
+    Fires on the **transition** (was null → is set), not on every upsert. A
+    re-upsert with the same `joined_at` does NOT refire.
+    ```json
+    {
+      "event": "participant.joined",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "participant": {
+          "id": "participant-uuid",
+          "email": "alice@example.com",
+          "name": "Alice",
+          "role": "attendee",
+          "source": "scenario_invite",
+          "joined_at": "2026-06-27T09:21:00.000Z",
+          "left_at": null,
+          "is_self": false
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="participant.left">
+    Same shape as `participant.joined` but fires when `left_at` transitions
+    from null → set.
+    ```json
+    {
+      "event": "participant.left",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "participant": {
+          "id": "participant-uuid",
+          "email": "alice@example.com",
+          "name": "Alice",
+          "role": "attendee",
+          "source": "scenario_invite",
+          "joined_at": "2026-06-27T09:21:00.000Z",
+          "left_at": "2026-06-27T09:24:00.000Z",
+          "is_self": false
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="transcript.ready">
+    Fires once when the full sentenced transcript has been persisted. Fires
+    BEFORE `session.analysis_complete`.
+    ```json
+    {
+      "event": "transcript.ready",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "transcript_id": "transcript-uuid",
+        "sentence_count": 142
+      }
+    }
+    ```
+    Fetch the body via `GET /v1/transcripts/meeting/{meeting_id}`.
+  </Tab>
+  <Tab title="recording.ready">
+    Fires when the recording row is created. The signed playback URL is
+    available via `GET /v1/recordings/url-with-thumbnail/{meeting_id}`.
+    ```json
+    {
+      "event": "recording.ready",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "recording_id": "recording-uuid"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="session.analysis_complete">
+    The original event. Body mirrors `GET /v1/analyses/meeting/{meeting_id}`.
+    ```json
+    {
+      "event": "session.analysis_complete",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "analysis": {
+          "analysis_id": "analysis-uuid",
+          "average_score": 82,
+          "total_score": 412,
+          "summary": "…",
+          "call_summary": "…",
+          "strengths": "…",
+          "growth_areas": "…",
+          "recommendations": "…",
+          "goal_results": [
+            { "goal": "Problem Solving", "result": { "score": 4, "feedback": "…" } }
+          ],
+          "highlights": [
+            { "title": "Identified the bottleneck early", "timestamp": 412 }
+          ],
+          "conversation_length": 187
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="analysis.failed">
+    Fires when the analysis pipeline threw. Use as a signal to retry via
+    `POST /v1/analyses/trigger/{meeting_id}` or alert the meeting owner.
+    ```json
+    {
+      "event": "analysis.failed",
+      "data": {
+        "meeting_id": "meeting-uuid",
+        "scenario_id": "scenario-uuid",
+        "error": "transcript empty"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Event ordering
+
+For a single meeting, the typical sequence is:
+
+```
+meeting.created
+  → participant.joined  (one per participant join)
+  → participant.left    (one per participant leave)
+  → meeting.ended
+  → transcript.ready
+  → session.analysis_complete   (or analysis.failed)
+  → recording.ready             (independent — Daily.co upload finishes asynchronously)
+```
+
+`recording.ready` is **NOT** guaranteed to fire after the analysis events —
+the Daily.co recording upload runs on its own clock. Don't gate
+`session.analysis_complete` handlers on having a recording yet.
+
+### Coming soon
+
+- `meeting.started` — requires a real "first participant entered the room"
+  signal. We track it in meetingMLservice today but don't persist it to
+  CoreBackend; will land when that round-trip ships.
+
+## Delivery & retries
+
+- Timeout per attempt: **10 seconds**.
+- Any **2xx** = success.
+- **4xx** (except 408/429) = permanently failed. We don't retry — your code
+  rejected the event on purpose.
+- **5xx / 408 / 429 / network errors** = retried with exponential backoff:
+  30s → 5m → 30m → 2h → 12h, then marked **dead**.
+- Every attempt is logged. View them at
+  `GET /v1/webhooks/endpoints/{id}/deliveries` or replay one with
+  `POST /v1/webhooks/deliveries/{deliveryId}/redeliver`.
+
+## Managing endpoints
+
+| Verb   | Path                                              | Purpose |
+|--------|---------------------------------------------------|---------|
+| POST   | `/v1/webhooks/endpoints`                          | Create (returns secret once) |
+| GET    | `/v1/webhooks/endpoints`                          | List |
+| GET    | `/v1/webhooks/endpoints/:id`                      | Show |
+| PATCH  | `/v1/webhooks/endpoints/:id`                      | Update url / events / enabled |
+| DELETE | `/v1/webhooks/endpoints/:id`                      | Remove |
+| POST   | `/v1/webhooks/endpoints/:id/rotate-secret`        | Issue a new secret (old stays valid 24h) |
+| GET    | `/v1/webhooks/endpoints/:id/deliveries`           | Delivery log (paginated, `?before=ISO&limit=N`) |
+| GET    | `/v1/webhooks/deliveries/:id`                     | Show one delivery (full payload + response body) |
+| POST   | `/v1/webhooks/deliveries/:id/redeliver`           | Re-queue a delivery |
+
+### Rotating a secret
+
+`POST /v1/webhooks/endpoints/:id/rotate-secret` returns a new `whsec_…` and
+keeps the previous secret valid for **24 hours**. During that window every
+delivery is signed with **both** secrets (two `v1=` segments in the
+`Waterr-Signature` header), so receivers can roll their verifier any time
+before the window expires.
+
+```
+Waterr-Signature: t=1751025600,v1=4c1f8a…,v1=78d4b2…
+```
+
+Accept the delivery if **any** `v1=` matches.
+
+### Per-event subscription
+
+Pass an explicit allowlist to receive only what you need:
+
+```bash
+curl -X PATCH https://api.waterr.ai/v1/webhooks/endpoints/{id} \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "subscribed_events": ["session.analysis_complete", "meeting.ended"] }'
+```
+
+## Backward compatibility
+
+The pre-v2 per-scenario webhook (configured via
+`PUT /v1/scenarios/{id}/session-options` with `webhook_url`) **still works**
+until **2026-09-25**. During the transition both paths fire:
+
+- A `Waterr-Signature` header (new format, replay-protected) for v2 receivers
+- The legacy `X-Waterr-Signature: sha256=<hex>` (body-only HMAC) so MVP
+  receivers don't break
+
+Migrate by creating a v2 endpoint with the same URL and removing
+`session_options.webhook_url`. After migration, drop the legacy verifier from
+your code.
+
+## Local development
+
+A first-class `waterr listen` CLI for tunneling webhooks to localhost is
+shipping in the next release — until then, use [ngrok](https://ngrok.com) or
+[Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) and point a
+test endpoint at the public URL. Disable the endpoint when you're done so
+real events don't pile up against a dead tunnel.
