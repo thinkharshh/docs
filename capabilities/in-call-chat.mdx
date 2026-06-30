@@ -1,0 +1,66 @@
+---
+title: In-Call Chat
+description: "Text chat alongside the voice meeting — supports messages and file uploads the AI can read."
+---
+
+Some things are easier to type than say. **In-Call Chat** gives the participant a chat panel during the meeting where they can send text messages, paste links, or upload files the AI will read on the fly.
+
+The AI sees both sides of the conversation — what's said over voice and what's typed in chat — so it can respond to either naturally.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Text messages" icon="message">
+    The participant types; the AI responds in voice. Useful for spelling out names, sharing URLs, or asking a clarifying question without interrupting.
+  </Card>
+  <Card title="File uploads" icon="paperclip">
+    The participant drops in a resume, a brief, a contract, or any supported doc. The AI reads the extracted text and can reference it for the rest of the meeting.
+  </Card>
+</CardGroup>
+
+## How files work
+
+When the participant attaches a file:
+
+1. The chat UI shows the file chip: **Uploading → Reading → Ready** (or **Failed** if the file can't be parsed).
+2. Backend extracts text from the file.
+3. The AI receives a notification that a new file is available, plus the extracted text.
+4. The AI can reference the file's contents for the rest of the meeting.
+
+Files are **transient to that meeting only** — they don't get added to the scenario's [Knowledge Base](/capabilities/knowledge-base), and the next meeting from the same scenario doesn't see them.
+
+## Supported formats and limits
+
+| Limit | Value |
+| --- | --- |
+| Max per file | 25 MB |
+| Supported types | PDF, PowerPoint (`.pptx`, `.ppt`), Word (`.docx`, `.doc`), plain text (`.txt`, `.md`), HTML, CSV |
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Resume Screening" icon="file-user">
+    Candidate uploads their resume mid-call. The AI interviewer immediately tailors questions to their experience.
+  </Card>
+  <Card title="Sales Discovery" icon="file-lines">
+    Prospect drops in their RFP or current vendor contract. The AI rep references specific clauses while pitching.
+  </Card>
+  <Card title="Document Review" icon="file-magnifying-glass">
+    Legal/medical/financial review meetings where the participant brings the document and the AI walks them through it.
+  </Card>
+  <Card title="Async Clarification" icon="link">
+    Participant pastes a URL or types a hard-to-pronounce term mid-meeting without breaking flow.
+  </Card>
+</CardGroup>
+
+## Privacy
+
+Chat messages and file uploads are scoped to that single meeting. They don't persist beyond the session, they aren't visible to other participants of other meetings, and they don't pollute the scenario's Knowledge Base.
+
+If you need files to persist across meetings of the same scenario, attach them to [Knowledge Base](/capabilities/knowledge-base) instead.
+
+## Related
+
+- [Knowledge Base](/capabilities/knowledge-base) — scenario-wide files, persistent across meetings
+- [Present File](/capabilities/present-file) — the AI shows files; the inverse of chat upload
+- [Consent](/capabilities/consent) — pre-meeting consent capture for sessions that handle sensitive uploads

@@ -51,6 +51,10 @@
               "capabilities/deep-thinking",
               "capabilities/web-search",
               "capabilities/participant-memory",
+              "capabilities/knowledge-base",
+              "capabilities/present-file",
+              "capabilities/in-call-chat",
+              "capabilities/consent",
               "capabilities/social",
               "capabilities/notifications"
             ]

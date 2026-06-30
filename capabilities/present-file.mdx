@@ -1,0 +1,70 @@
+---
+title: Present File
+description: "Let the AI show a slide, PDF, image, or video to the participant mid-meeting."
+---
+
+A meeting where the AI can talk *and* show beats one where it can only talk. **Present File** gives your AI persona a stack of artifacts it can pull up on screen — a deck during a pitch coaching session, a contract clause during a negotiation roleplay, an X-ray during a clinical scenario, a product demo video during onboarding.
+
+The AI decides when to show what based on the conversation, using a `present_content` tool. The file appears in the meeting as a video-overlay surface that both the participant and the AI can reference.
+
+## Setting it up
+
+<Steps>
+  <Step title="Open your scenario">
+    Switch to the **Settings** tab in the scenario builder.
+  </Step>
+  <Step title="Open the Present Files section">
+    This is a separate section from Knowledge Base — same Settings tab, different list.
+  </Step>
+  <Step title="Upload your files">
+    Drag-and-drop or pick from your computer. Each file gets a name and a short description — the AI uses the description to decide when to show that file.
+  </Step>
+  <Step title="Steer when to present (optional)">
+    In your scenario's prompt, mention the file name or describe a trigger ("when they ask about pricing, show the pricing sheet"). The AI follows the cue.
+  </Step>
+</Steps>
+
+## Supported formats and limits
+
+| Limit | Value |
+| --- | --- |
+| Max per file | 200 MB |
+| Max files per scenario | 5 |
+| Documents | PDF, PowerPoint (`.pptx`, `.ppt`) |
+| Images | JPG, PNG, GIF, WebP, SVG |
+| Video | MP4, WebM, MOV, M4V |
+
+Files marked as presentable are also indexed for retrieval — they double as Knowledge Base entries. If you want a file searchable but never shown on screen, attach it to **Knowledge Base** instead.
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Pitch Coaching" icon="presentation-screen">
+    The AI investor pulls up your real pitch deck slide-by-slide and asks pointed questions per slide.
+  </Card>
+  <Card title="Contract Negotiation" icon="file-contract">
+    The AI counter-party shows the disputed clause on screen mid-conversation.
+  </Card>
+  <Card title="Clinical Training" icon="stethoscope">
+    The AI patient case shows X-rays, charts, or lab results when the trainee asks for them.
+  </Card>
+  <Card title="Product Demo" icon="circle-play">
+    The AI sales rep plays a 30-second product video instead of describing the feature in words.
+  </Card>
+</CardGroup>
+
+## How the AI decides
+
+The AI sees each file's name and description. During the meeting, when the conversation reaches a point that matches a file's purpose, it calls the `present_content` tool with that file's ID. The file appears on the meeting screen as a video overlay; the AI then narrates over it or asks the participant to react to it.
+
+You can guide this in your scenario's prompt:
+
+> *In your prompt:* "After the participant introduces themselves, show them the **company-overview.pdf** before asking your discovery questions."
+
+Without explicit prompt instructions, the AI presents files opportunistically based on conversation drift.
+
+## Related
+
+- [Knowledge Base](/capabilities/knowledge-base) — silent retrieval from files; the AI cites without showing
+- [Vision](/capabilities/vision) — the inverse direction: the AI *sees* what the participant shows
+- [In-Call Chat](/capabilities/in-call-chat) — for files the **participant** uploads to the AI during the meeting

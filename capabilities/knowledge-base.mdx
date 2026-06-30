@@ -1,0 +1,68 @@
+---
+title: Knowledge Base
+description: "Attach reference files to a scenario so the AI can pull from them mid-conversation."
+---
+
+Drop files into a scenario's **Knowledge Base** and the AI can search them in real time during the meeting. The persona stops sounding generic and starts citing your actual product specs, sales playbook, course materials, or policy docs.
+
+How it works under the hood: files are chunked, embedded, and indexed in a vector store. During the meeting, the AI calls a `search_knowledge_base` tool whenever the conversation drifts into territory the docs cover — pulls the relevant chunks back, and weaves them into the answer.
+
+## Setting it up
+
+<Steps>
+  <Step title="Open your scenario">
+    Go to the scenario builder and switch to the **Settings** tab.
+  </Step>
+  <Step title="Find the Knowledge Base section">
+    Drop files in via drag-and-drop or the file picker.
+  </Step>
+  <Step title="Wait for indexing">
+    Files chunk and embed in the background. A small "Indexing…" indicator turns into a checkmark when the file is searchable.
+  </Step>
+  <Step title="Pick a retrieval mode">
+    `auto` (recommended) — the AI decides when to search. `always` — every turn does a retrieval pass. `off` — files attached but never searched.
+  </Step>
+</Steps>
+
+## Supported formats and limits
+
+| Limit | Value |
+| --- | --- |
+| Max per file | 200 MB |
+| Max files per scenario | 5 |
+| Supported types | PDF, PowerPoint (`.pptx`, `.ppt`), Word (`.docx`, `.doc`), plain text (`.txt`, `.md`) |
+
+Files are scenario-scoped — they live across every meeting started from that scenario. Removing a file from the Knowledge Base de-indexes it from the vector store.
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Sales Discovery" icon="briefcase">
+    Attach your product one-pager and pricing sheet. The AI buyer's-question-handling stays accurate to your actual offering, not its training data.
+  </Card>
+  <Card title="Customer Support Training" icon="headset">
+    Attach your help center articles. The AI roleplays a customer and grades reps on whether their answers match your real KB.
+  </Card>
+  <Card title="Course Coaching" icon="graduation-cap">
+    Attach the course syllabus and reading list. The AI coach references the curriculum when explaining concepts.
+  </Card>
+  <Card title="Compliance Walkthroughs" icon="shield-check">
+    Attach the policy doc. The AI runs the participant through scenarios and quotes the exact policy text when reinforcing the right answer.
+  </Card>
+</CardGroup>
+
+## Knowledge Base vs. Present File
+
+These are two separate tabs with two different behaviors:
+
+| | **Knowledge Base** | **Present File** |
+| --- | --- | --- |
+| What the AI does | Searches it silently and quotes facts | Shows it on screen to the participant |
+| When triggered | Whenever the conversation calls for it | When the AI decides to "show" something |
+| Persists across meetings | Yes (scenario-scoped) | Yes (scenario-scoped) |
+
+See [Present File](/capabilities/present-file) for the show-on-screen path.
+
+## Knowledge Base vs. In-Call Chat uploads
+
+A participant who uploads a file via [in-call chat](/capabilities/in-call-chat) does **not** add it to the scenario's Knowledge Base. Chat uploads are read transiently for that meeting only — they never leak into other sessions.

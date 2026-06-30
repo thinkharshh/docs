@@ -1,0 +1,78 @@
+---
+title: Consent
+description: "Show a custom consent message before the participant joins — for recording, data use, or any disclosure your team requires."
+---
+
+If your meetings handle anything sensitive — recordings, health information, candidate evaluations, financial discussion — you can require participants to read and accept a consent message before they're allowed to join.
+
+The consent screen appears **before** the device check, so the participant agrees before the AI ever sees them.
+
+## Setting it up
+
+<Steps>
+  <Step title="Open your scenario">
+    Switch to the **Settings** tab.
+  </Step>
+  <Step title="Enable consent">
+    Toggle on **Require consent**.
+  </Step>
+  <Step title="Write your consent message">
+    Plain text or markdown. Use markdown links to point participants at your Terms of Service, Privacy Policy, or any external page. Example:
+
+    ```markdown
+    This session is recorded and analyzed by AI for training quality.
+    By continuing you agree to our [Terms](https://example.com/terms)
+    and [Privacy Policy](https://example.com/privacy).
+    ```
+  </Step>
+  <Step title="Save">
+    The next participant who tries to join sees the modal before they can hit "Start".
+  </Step>
+</Steps>
+
+## What the participant sees
+
+A modal with your message and two options:
+
+- **I understand** — accept and continue to the device check
+- **Cancel** — navigate away from the meeting
+
+If the participant cancels, they don't join the meeting and the AI never receives them.
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Recording Disclosure" icon="microphone">
+    Disclose that the session is recorded, transcribed, and reviewed. Required in many jurisdictions for two-party-consent recording.
+  </Card>
+  <Card title="Candidate Screening" icon="user-tie">
+    Disclose that a recruiter or hiring manager may review the AI evaluation. Get explicit agreement before the interview begins.
+  </Card>
+  <Card title="Healthcare Training" icon="user-doctor">
+    Display HIPAA or PHI handling disclosures before clinicians enter a simulated patient encounter.
+  </Card>
+  <Card title="Research Studies" icon="flask">
+    Capture informed-consent text for IRB-governed user research sessions.
+  </Card>
+</CardGroup>
+
+## Markdown support
+
+The consent message renders as markdown. The most useful pieces:
+
+- `**bold**` and `*italic*` for emphasis
+- `[Link text](https://example.com)` for external links — opens in a new tab
+- Line breaks render as paragraph breaks
+
+Keep the message focused. A 200-word consent block has read-through; a 2,000-word block gets dismissed.
+
+## What's stored
+
+The consent screen is a **pre-join gate**, not a stored agreement record. The participant's click is enforced (they can't proceed without it) but isn't logged to an auditable consent table.
+
+If your compliance program requires an audit trail of *who* consented to *what version* of the message *when*, capture that on your own backend before redirecting the participant to the meeting URL, or contact us about extending the model.
+
+## Related
+
+- [Embed API](/api-reference/embed-tokens) — when embedding on a partner site, pass `end_user_id` so any consent-side capture on your end can be tied back to the meeting
+- [In-Call Chat](/capabilities/in-call-chat) — files the participant uploads in chat are scoped to the meeting; consent should make this clear if relevant to your context
