@@ -168,6 +168,21 @@
             ]
           },
           {
+            "group": "Tools",
+            "pages": [
+              "api-reference/custom-functions",
+              "api-reference/endpoint/get-custom-functions",
+              "api-reference/endpoint/post-custom-functions",
+              "api-reference/endpoint/get-custom-functions-id",
+              "api-reference/endpoint/patch-custom-functions-id",
+              "api-reference/endpoint/delete-custom-functions-id",
+              "api-reference/endpoint/get-scenarios-scenarioid-custom-functions",
+              "api-reference/endpoint/post-scenarios-scenarioid-custom-functions-id-attach",
+              "api-reference/endpoint/patch-scenarios-scenarioid-custom-functions-id",
+              "api-reference/endpoint/delete-scenarios-scenarioid-custom-functions-id"
+            ]
+          },
+          {
             "group": "Users",
             "pages": [
               "api-reference/endpoint/get-users-userid",
@@ -186,7 +201,6 @@
             "group": "Integrations",
             "pages": [
               "api-reference/mcp",
-              "api-reference/custom-functions",
               "api-reference/webhooks"
             ]
           },

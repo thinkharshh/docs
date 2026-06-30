@@ -10,6 +10,9 @@ These examples show complete integrations from API setup to result retrieval. Co
 ## Example 1: Embed Interview Practice on Your Website
 
 Build a page where candidates practice interviews and you get scored results.
+The AI interviewer pulls each candidate's real CV from your ATS mid-session
+via a [custom tool](/api-reference/custom-functions) so questions reference
+their actual experience.
 
 ### Setup
 
@@ -56,6 +59,89 @@ app.get('/api/results/:meetingId', async (req, res) => {
 });
 ```
 
+### Register a custom tool (one-time)
+
+Register a `lookup_candidate` tool once on your account so the AI interviewer
+can pull the candidate's CV from your ATS during the session. The function
+runs **on your server** — Waterr just calls your webhook when the LLM emits
+the tool call.
+
+```bash
+# 1) Define the tool on your account
+curl -X POST https://api.waterr.ai/v1/custom-functions \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "lookup_candidate",
+    "description": "Fetch the candidate'\''s CV from the ATS. Call once at the start of the interview so you can reference their real experience.",
+    "parameters_schema": {
+      "type": "object",
+      "properties": {
+        "candidate_email": {
+          "type": "string",
+          "description": "Candidate'\''s email — used as the ATS key."
+        }
+      },
+      "required": ["candidate_email"]
+    },
+    "execution_mode": "webhook",
+    "webhook_url": "https://your-app.com/waterr/tools/lookup_candidate",
+    "webhook_secret": "whsec_replace_with_random_64_chars",
+    "timeout_ms": 8000
+  }'
+# → { "data": { "id": "fn-lookup-candidate", ... } }
+
+# 2) Attach it to the interview scenario
+curl -X POST https://api.waterr.ai/v1/scenarios/{scenarioId}/custom-functions/fn-lookup-candidate/attach \
+  -H "Authorization: Bearer wai_<your_key>"
+```
+
+### Handle the tool call (webhook)
+
+```javascript
+// Same server.js — Waterr POSTs here when the AI calls `lookup_candidate`
+const crypto = require('crypto');
+
+app.post(
+  '/waterr/tools/lookup_candidate',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    // Verify the HMAC signature using the raw body
+    const expected =
+      'sha256=' +
+      crypto
+        .createHmac('sha256', process.env.WATERR_TOOL_SECRET)
+        .update(req.body)
+        .digest('hex');
+    const signature = req.headers['x-waterr-signature'];
+    if (
+      !signature ||
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
+      return res.status(401).send('invalid signature');
+    }
+
+    const event = JSON.parse(req.body);
+    const { candidate_email } = event.data.arguments;
+    const cv = await ats.getCandidateByEmail(candidate_email);
+
+    // Whatever you return is fed back to the LLM as the tool result
+    res.json({
+      name: cv.fullName,
+      headline: cv.headline,
+      years_experience: cv.yearsExperience,
+      last_role: cv.experience[0],
+      skills: cv.skills.slice(0, 10),
+    });
+  }
+);
+```
+
+Now when the candidate joins, the AI interviewer's first turn can be:
+*"Hi Jane — I see you've been a senior backend engineer at Acme for three
+years. I'd love to dig into the payments-platform migration on your CV. Can
+you walk me through it?"*
+
 ### Frontend
 
 ```html
@@ -81,6 +167,14 @@ async function startSession() {
 }
 </script>
 ```
+
+<Tip>
+  The tool definition is account-scoped — register `lookup_candidate` once and
+  attach it to every interview scenario you ship. Rotating the webhook secret
+  or updating the JSON Schema propagates to every attached scenario instantly.
+  See the [Tools guide](/api-reference/custom-functions) for the full CRUD
+  surface.
+</Tip>
 
 ---
 

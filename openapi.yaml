@@ -205,6 +205,75 @@ components:
         updated_at:
           type: string
           format: date-time
+    CustomFunction:
+      type: object
+      description: Account-scoped tool definition. The LLM sees `tool_spec` during a meeting; the runtime invokes the function via `webhook_url` (or a client event) when the LLM emits a tool call.
+      properties:
+        id:
+          type: string
+          description: UUID of the function definition.
+        membership_id:
+          type: string
+          description: Membership the function belongs to.
+        name:
+          type: string
+          description: 'Function name shown to the LLM. Pattern `^[a-zA-Z0-9_-]{1,64}$`, unique per account.'
+        description:
+          type: string
+          description: Natural-language description shown verbatim to the LLM — write it like a prompt.
+        parameters_schema:
+          type: object
+          description: 'JSON Schema for the tool arguments. Must be `type: "object"`.'
+        execution_mode:
+          type: string
+          enum:
+            - webhook
+            - client
+          description: '`webhook` (default) — CoreBackend POSTs args to `webhook_url` and returns the response to the LLM. `client` — the frontend handles the tool call over the Daily data channel.'
+        webhook_url:
+          type: string
+          description: HTTPS endpoint that receives the tool call. Required when `execution_mode = "webhook"`.
+        has_webhook_secret:
+          type: boolean
+          description: True when a webhook signing secret is set. The secret itself is never returned after creation.
+        timeout_ms:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          description: Webhook response timeout. Default 10000.
+        tool_spec:
+          type: object
+          description: 'OpenAI-shaped tool spec the LLM sees — `{ type: "function", function: { name, description, parameters } }`.'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ScenarioCustomFunctionAttachment:
+      type: object
+      description: Per-scenario link between a scenario and a custom function definition.
+      properties:
+        id:
+          type: string
+        scenario_id:
+          type: string
+        custom_function_id:
+          type: string
+        active:
+          type: boolean
+          description: Kill-switch — when `false`, the tool is hidden from the LLM at meeting init but the attachment is preserved.
+        position:
+          type: integer
+          description: Display order on the manage-tools UI. Runtime ignores this.
+        custom_function:
+          $ref: '#/components/schemas/CustomFunction'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 security:
   - apiKeyAuth: []
 tags:
@@ -217,6 +286,10 @@ tags:
   - name: Analyses
   - name: Recordings
   - name: Transcripts
+  - name: Tools
+    description: Account-scoped custom function (tool) definitions the LLM can call mid-meeting.
+  - name: Scenario Tools
+    description: Per-scenario attachments linking a scenario to one or more tool definitions.
 paths:
   /analyses/{id}:
     get:
@@ -1389,3 +1462,348 @@ paths:
           description: Unauthorized
         '500':
           description: Server error
+  /custom-functions:
+    get:
+      summary: List tool definitions
+      description: Return every custom function (tool) defined on the caller's account.
+      tags:
+        - Tools
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of tool definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomFunction'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+    post:
+      summary: Create a tool definition
+      description: >-
+        Register a new custom function on the account. The definition is reusable — attach it to any number of scenarios
+        via `POST /scenarios/{scenarioId}/custom-functions/{id}/attach`.
+      tags:
+        - Tools
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - parameters_schema
+              properties:
+                name:
+                  type: string
+                  description: 'Function name shown to the LLM. Pattern `^[a-zA-Z0-9_-]{1,64}$`. Unique per account.'
+                description:
+                  type: string
+                  description: Natural-language description the LLM uses to decide when to call the tool.
+                parameters_schema:
+                  type: object
+                  description: 'JSON Schema for the tool arguments. Must be `type: "object"`. Reference fields in `required`.'
+                execution_mode:
+                  type: string
+                  enum:
+                    - webhook
+                    - client
+                  description: Defaults to `webhook`.
+                webhook_url:
+                  type: string
+                  description: HTTPS endpoint that receives the tool call. Required when `execution_mode = "webhook"`.
+                webhook_secret:
+                  type: string
+                  description: 'HMAC-SHA256 signing secret. Used to sign every webhook request as `X-Waterr-Signature: sha256=<hex>`.'
+                timeout_ms:
+                  type: integer
+                  minimum: 1000
+                  maximum: 30000
+                  description: Webhook response timeout. Default 10000.
+      responses:
+        '201':
+          description: Tool definition created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CustomFunction'
+        '400':
+          description: Invalid input (bad name, schema, or webhook URL)
+        '401':
+          description: Unauthorized
+        '409':
+          description: Function name already exists on this account
+        '500':
+          description: Server error
+  /custom-functions/{id}:
+    get:
+      summary: Get a tool definition
+      tags:
+        - Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tool definition UUID.
+      responses:
+        '200':
+          description: Tool definition
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CustomFunction'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool not found
+    patch:
+      summary: Update a tool definition
+      description: >-
+        Patch any subset of the tool's fields. Changes propagate instantly to every scenario the tool is attached to —
+        edit once, update everywhere.
+      tags:
+        - Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                parameters_schema:
+                  type: object
+                execution_mode:
+                  type: string
+                  enum:
+                    - webhook
+                    - client
+                webhook_url:
+                  type: string
+                webhook_secret:
+                  type: string
+                  description: New HMAC secret. Pass to rotate.
+                timeout_ms:
+                  type: integer
+                  minimum: 1000
+                  maximum: 30000
+      responses:
+        '200':
+          description: Updated tool definition
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CustomFunction'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool not found
+    delete:
+      summary: Delete a tool definition
+      description: Removes the definition. **Cascades** — all per-scenario attachments are deleted too.
+      tags:
+        - Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool not found
+  /scenarios/{scenarioId}/custom-functions:
+    get:
+      summary: List tools attached to a scenario
+      description: Return every tool currently attached to the scenario, with per-scenario `active` and `position`.
+      tags:
+        - Scenario Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attached tools for this scenario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScenarioCustomFunctionAttachment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Scenario not found
+  /scenarios/{scenarioId}/custom-functions/{id}/attach:
+    post:
+      summary: Attach a tool to a scenario
+      description: >-
+        Link an existing tool definition to a scenario. Idempotent — re-attaching the same pair returns the existing row
+        with `200 OK` instead of `201 Created`.
+      tags:
+        - Scenario Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tool definition UUID.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  description: Defaults to `true`. When `false`, the tool is persisted on the scenario but invisible to the LLM.
+                position:
+                  type: integer
+                  description: Display order in the manage-tools UI.
+      responses:
+        '201':
+          description: Attached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScenarioCustomFunctionAttachment'
+        '200':
+          description: Already attached — existing row returned
+        '401':
+          description: Unauthorized
+        '404':
+          description: Scenario or tool not found
+  /scenarios/{scenarioId}/custom-functions/{id}:
+    patch:
+      summary: Update a scenario-tool attachment
+      description: Toggle the per-scenario `active` flag or change display `position`. Does not touch the underlying definition.
+      tags:
+        - Scenario Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tool definition UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                position:
+                  type: integer
+      responses:
+        '200':
+          description: Attachment updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScenarioCustomFunctionAttachment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Attachment not found
+    delete:
+      summary: Detach a tool from a scenario
+      description: Removes the attachment row. The underlying tool definition is preserved and can still be attached to other scenarios.
+      tags:
+        - Scenario Tools
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Detached
+        '401':
+          description: Unauthorized
+        '404':
+          description: Attachment not found
