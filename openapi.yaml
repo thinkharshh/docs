@@ -275,6 +275,31 @@ components:
           default: 10000
           description: 'Max wait for your webhook to respond, in ms. Range 1000–30000.'
           example: 8000
+        on_call:
+          type: string
+          enum:
+            - generate_filler
+            - static_filler
+            - silent
+            - passthrough
+          default: silent
+          description: 'What the persona does WHILE the tool runs. `silent` (default) — go quiet. `static_filler` — speak the exact `static_filler` phrase. `generate_filler` — pick from a generic pool ("let me check on that"). `passthrough` — silent + skip LLM follow-up on the result.'
+          example: static_filler
+        static_filler:
+          type: string
+          nullable: true
+          description: 'Phrase the persona speaks while the tool runs. Required when `on_call = "static_filler"`. Must be null otherwise.'
+          example: 'Sure, let me grab that for you.'
+        on_resolve:
+          type: string
+          enum:
+            - generate_response
+            - response_in_result
+            - add_to_context
+            - fire_and_forget
+          default: generate_response
+          description: 'What to do with the tool result AFTER it returns. `generate_response` (default) — feed to LLM, persona speaks about it. `add_to_context` — stash silently, no follow-up turn. `response_in_result` — speak the result verbatim (Gemini Live: degrades to add_to_context). `fire_and_forget` — don''t wait for the result at all.'
+          example: generate_response
         tool_spec:
           type: object
           description: 'Read-only. The OpenAI-shaped spec the LLM sees: `{ type, function: { name, description, parameters } }`.'
@@ -1652,6 +1677,30 @@ paths:
                   default: 10000
                   description: 'Webhook response timeout in ms. Range 1000–30000.'
                   example: 8000
+                on_call:
+                  type: string
+                  enum:
+                    - generate_filler
+                    - static_filler
+                    - silent
+                    - passthrough
+                  default: silent
+                  description: 'What the persona does while the tool runs. See [Conversational modes](/api-reference/custom-functions#conversational-modes).'
+                  example: static_filler
+                static_filler:
+                  type: string
+                  description: 'Phrase to speak during the tool call. **Required** when `on_call = "static_filler"`, **forbidden** otherwise.'
+                  example: 'Sure, let me grab that for you.'
+                on_resolve:
+                  type: string
+                  enum:
+                    - generate_response
+                    - response_in_result
+                    - add_to_context
+                    - fire_and_forget
+                  default: generate_response
+                  description: 'What to do with the result after the tool returns.'
+                  example: generate_response
             example:
               name: lookup_account
               description: 'Fetch the participant''s CRM record so you can reference their plan, MRR, and last contact date.'
@@ -1809,9 +1858,28 @@ paths:
                   type: integer
                   minimum: 1000
                   maximum: 30000
+                on_call:
+                  type: string
+                  enum:
+                    - generate_filler
+                    - static_filler
+                    - silent
+                    - passthrough
+                static_filler:
+                  type: string
+                  nullable: true
+                  description: 'Phrase spoken while the tool runs. Required when `on_call = "static_filler"`; pass `null` to clear it when switching to another mode.'
+                on_resolve:
+                  type: string
+                  enum:
+                    - generate_response
+                    - response_in_result
+                    - add_to_context
+                    - fire_and_forget
             example:
-              description: 'Fetch the participant''s CRM record — include plan, MRR, last contact, and the three most recent support tickets.'
-              timeout_ms: 12000
+              on_call: static_filler
+              static_filler: 'One moment, looking that up.'
+              on_resolve: generate_response
       responses:
         '200':
           description: Tool updated.

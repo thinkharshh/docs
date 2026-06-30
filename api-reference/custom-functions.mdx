@@ -31,6 +31,9 @@ existing tools with a name change.
 | `webhook_url` | string | conditional | HTTP(S) endpoint. Required when `execution_mode = "webhook"`. |
 | `webhook_secret` | string | – | HMAC-SHA256 signing secret. Write-only — never returned after creation. |
 | `timeout_ms` | integer | – | Webhook response timeout. Range `1000`–`30000`. Default `10000`. |
+| `on_call` | enum | – | What the persona says/does *while* the tool runs. `silent` (default) / `static_filler` / `generate_filler` / `passthrough`. See [Conversational modes](#conversational-modes). |
+| `static_filler` | string | conditional | Phrase the persona speaks during the call. Required when `on_call = "static_filler"`. |
+| `on_resolve` | enum | – | What happens with the result *after* it returns. `generate_response` (default) / `add_to_context` / `response_in_result` / `fire_and_forget`. |
 | `tool_spec` | object | read-only | The OpenAI-shaped spec the LLM sees. Computed from the fields above. |
 
 ### Example tool object
@@ -51,6 +54,9 @@ existing tools with a name change.
   "webhook_url": "https://your-app.com/waterr/tools/lookup_account",
   "has_webhook_secret": true,
   "timeout_ms": 8000,
+  "on_call": "static_filler",
+  "static_filler": "Sure, let me grab that for you.",
+  "on_resolve": "generate_response",
   "tool_spec": {
     "type": "function",
     "function": {
@@ -76,6 +82,55 @@ existing tools with a name change.
 |---|---|---|
 | `webhook` *(default)* | We POST args to `webhook_url`, await JSON within `timeout_ms`, return the body to the LLM. Synchronous. | Your tool needs to compute or fetch a result server-side. |
 | `client` | We short-circuit with `{ status: "client_handled" }`. Your frontend handles the call over the Daily data channel. | The action lives in the participant's browser — open a doc, prefill a form. |
+
+---
+
+## Conversational modes
+
+A tool call can take 1–8 seconds. Two extra fields control what the persona
+does **during** and **after** the call so the conversation doesn't go dead.
+
+### `on_call` — what the persona does while the tool runs
+
+| Mode | What happens |
+|---|---|
+| `silent` *(default)* | Persona goes quiet. Matches legacy behavior. |
+| `static_filler` | Persona speaks the literal `static_filler` phrase. Pre-rendered at meeting start — zero added latency. |
+| `generate_filler` | Persona speaks one of a generic pool (*"let me check on that"*, *"one moment"*). |
+| `passthrough` | Stay silent AND skip the LLM follow-up turn on the result (useful for analytics/CRM writes that shouldn't enter the conversation). |
+
+```json
+{
+  "on_call": "static_filler",
+  "static_filler": "Sure, let me grab that for you."
+}
+```
+
+`static_filler` is **required** when `on_call = "static_filler"` and **forbidden** otherwise.
+
+### `on_resolve` — what happens with the result
+
+| Mode | What happens |
+|---|---|
+| `generate_response` *(default)* | Result is fed to the LLM; persona speaks about it naturally. |
+| `add_to_context` | Result is stashed in context, no spoken acknowledgment. Persona uses it on the next user turn. |
+| `response_in_result` | Persona speaks the result text **verbatim** (skips LLM rewrite). Predictable for compliance disclaimers or fixed messaging. |
+| `fire_and_forget` | Don't wait for the webhook. Persona moves on; the result is logged but never surfaces in the conversation. |
+
+```json
+{
+  "on_call": "static_filler",
+  "static_filler": "One moment.",
+  "on_resolve": "add_to_context"
+}
+```
+
+<Warning>
+  On **Gemini Live**, `response_in_result` falls back to `add_to_context` —
+  the native-audio API can't be forced to speak an exact string. The result
+  is still in context for the next turn. Use cloud-TTS providers (OpenAI,
+  ElevenLabs, Cartesia) for true verbatim playback.
+</Warning>
 
 ---
 
