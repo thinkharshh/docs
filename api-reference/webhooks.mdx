@@ -491,10 +491,68 @@ Migrate by creating a v2 endpoint with the same URL and removing
 `session_options.webhook_url`. After migration, drop the legacy verifier from
 your code.
 
-## Local development
+## Local development with the `waterr` CLI
 
-A first-class `waterr listen` CLI for tunneling webhooks to localhost is
-shipping in the next release — until then, use [ngrok](https://ngrok.com) or
-[Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) and point a
-test endpoint at the public URL. Disable the endpoint when you're done so
-real events don't pile up against a dead tunnel.
+The `waterr` CLI tunnels live webhook events to your laptop and fires
+synthetic events for receiver testing — no ngrok required.
+
+### Install
+
+```bash
+npm install -g @waterr-ai/cli
+waterr login          # paste a wai_… API key
+```
+
+### Tunnel events to your local server
+
+```bash
+waterr listen --forward-to http://localhost:3000/webhooks/waterr
+```
+
+Every real event fired on your account is streamed over a signed WebSocket
+to the CLI and POSTed to your local URL. Signature headers come through
+unchanged, so your local verifier exercises the same code path as prod.
+
+Filter to specific events:
+
+```bash
+waterr listen \
+  --forward-to http://localhost:3000/webhooks/waterr \
+  --events meeting.ended,recording.ready
+```
+
+Print payloads to stdout instead of forwarding (handy for debugging):
+
+```bash
+waterr listen          # no --forward-to → print only
+```
+
+### Fire a synthetic event
+
+```bash
+# Default: tunnels + configured endpoints both receive it
+waterr trigger session.analysis_complete
+
+# Tunnels-only — don't hit your configured prod URL
+waterr trigger meeting.ended --no-deliver
+
+# Override the sample data
+waterr trigger session.analysis_complete \
+  --meeting-id my-test-meeting \
+  --data '{"analysis":{"average_score":99}}'
+```
+
+### Endpoint + delivery management
+
+```bash
+waterr endpoints list
+waterr endpoints create https://my-app.com/hook --events meeting.ended,recording.ready
+waterr endpoints rotate <endpointId>
+waterr endpoints delete <endpointId>
+
+waterr deliveries tail <endpointId>            # recent attempts
+waterr deliveries show <deliveryId>            # full payload + response body
+waterr deliveries replay <deliveryId>          # re-queue
+```
+
+See `waterr <command> --help` for full flags.
