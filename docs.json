@@ -131,7 +131,7 @@
             ]
           },
           {
-            "group": "Embedding",
+            "group": "Embed Scenario",
             "pages": [
               "api-reference/embed-tokens"
             ]
