@@ -27,6 +27,7 @@ curl -X POST https://api.waterr.ai/v1/embed-tokens \
   -H "Content-Type: application/json" \
   -d '{
     "scenario_id": "SCENARIO_UUID",
+    "email": "alex@partner.example",
     "end_user_id": "user_42",
     "person_name": "Alex",
     "variant": "button",
@@ -62,8 +63,16 @@ If either is missing the endpoint returns 403.
   UUID of the scenario to embed. Must be owned by the caller's membership and have `embed_enabled: true`.
 </ParamField>
 
+<ParamField body="email" type="string">
+  **End-user identity.** The token's identity key. Resolves to a per-creator participant record so the same end user across multiple meetings is recognised as one identity (enables cross-session participant memory, accurate analytics, and a coherent dashboard view). Omit for a fully anonymous embed — the session still runs, but there's no persistent identity and no cross-meeting memory.
+</ParamField>
+
+<ParamField body="participant_id" type="string">
+  UUID of a participant you pre-created via `POST /v1/participants` (advanced). Use when you want to control the participant record explicitly — for example, building a roster ahead of time. Wins over `email` if both are sent. Must belong to the scenario's organisation.
+</ParamField>
+
 <ParamField body="end_user_id" type="string">
-  Opaque identifier for the end user on your side. Stored on the meeting record so you can correlate sessions with your users. Max 128 chars.
+  **Metadata only — not used for identity resolution.** Your local user ID on the partner side. Stored on the participant record as `external_ref` so you can reconcile our participant rows against your own user table. Send it alongside `email`; on its own (no `email`) it has no identity effect and the session runs anonymously. Max 128 chars.
 </ParamField>
 
 <ParamField body="person_name" type="string">
@@ -166,7 +175,8 @@ app.get("/embed/launch", async (req, res) => {
     },
     body: JSON.stringify({
       scenario_id: "SCENARIO_UUID",
-      end_user_id: req.user.id,
+      email: req.user.email,        // identity key
+      end_user_id: req.user.id,     // metadata for your reconciliation
       person_name: req.user.name,
       variant: "inline",
       height: 720,
@@ -188,7 +198,8 @@ async def launch(request: Request):
             headers={"Authorization": f"Bearer {WATERR_API_KEY}"},
             json={
                 "scenario_id": "SCENARIO_UUID",
-                "end_user_id": request.state.user.id,
+                "email": request.state.user.email,        # identity key
+                "end_user_id": request.state.user.id,     # metadata for your reconciliation
                 "person_name": request.state.user.name,
                 "variant": "button",
             },
