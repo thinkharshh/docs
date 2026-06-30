@@ -65,6 +65,16 @@ The generated embed code looks like this:
 The `allow` attribute is required for camera, microphone, and screen sharing to work inside the iframe. Your website must be served over **HTTPS** for these browser permissions to work.
 </Warning>
 
+## Embedding inside your own app
+
+The Share modal snippet works for public scenarios on a static page. If you need any of the following, use the API instead:
+
+- Embed a **private** scenario
+- Identify the **end user** in the meeting (their name, your user ID)
+- Lock the iframe to **specific origins** so a leaked URL can't be used elsewhere
+
+See [API — Embedding](/api-reference/embed-tokens) — one call mints a short-lived signed token and returns a ready-to-paste iframe snippet.
+
 ## Compatibility
 
 Embeds work on any website that supports iframes or script tags, including:

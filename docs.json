@@ -131,6 +131,12 @@
             ]
           },
           {
+            "group": "Embedding",
+            "pages": [
+              "api-reference/embed-tokens"
+            ]
+          },
+          {
             "group": "Post-Meeting Data",
             "pages": [
               "api-reference/endpoint/get-analyses-meeting-meetingid",

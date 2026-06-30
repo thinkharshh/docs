@@ -1,0 +1,206 @@
+---
+title: 'Embedding'
+description: 'Mint a short-lived signed JWT and get a ready-to-paste iframe snippet in one call.'
+---
+
+Use this when you want to embed a scenario on a third-party site and **either** the scenario is private, **or** you want to pass per-user identity, **or** you want to lock the iframe to specific origins.
+
+If your scenario is public and you don't need any of the above, you can skip this and use the tokenless URL from the Studio Share modal — see [Embedding a scenario on your website](/sharing/embed-in-website).
+
+## When to use this endpoint
+
+| You want… | Use |
+| --- | --- |
+| Drop-in widget on your marketing site, public scenario | [Tokenless URL](/sharing/embed-in-website) |
+| Embed inside your authenticated product, identify the end user, lock origin | **`POST /v1/embed-tokens`** (this page) |
+| Private scenario (not `visibility: public`) | **`POST /v1/embed-tokens`** (this page) |
+
+Tokens are short-lived (default 10 min, max 30 min) and origin-locked. Mint one server-side per session so your `wai_` key never reaches the browser.
+
+## One-call DX
+
+The response gives you the token, the fully formed iframe URL, **and** a copy-pasteable `<iframe>` snippet. No client-side URL assembly.
+
+```bash
+curl -X POST https://api.waterr.ai/v1/embed-tokens \
+  -H "Authorization: Bearer wai_<your_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scenario_id": "SCENARIO_UUID",
+    "end_user_id": "user_42",
+    "person_name": "Alex",
+    "variant": "button",
+    "height": 720
+  }'
+```
+
+Response:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_at": 1751305200,
+  "url": "https://waterr.ai/embed/button/SCENARIO_UUID?t=eyJ...",
+  "iframe_html": "<iframe src=\"https://waterr.ai/embed/button/SCENARIO_UUID?t=eyJ...\" width=\"100%\" height=\"720\" allow=\"camera; microphone; autoplay; clipboard-read; clipboard-write\" style=\"border:0;border-radius:12px\"></iframe>"
+}
+```
+
+Drop `iframe_html` into your page server-rendered and you're done.
+
+## Prerequisites
+
+Before this endpoint works for a scenario:
+
+1. **Embedding must be enabled** on the scenario (`embed_enabled: true`). Toggle it in the Studio Share modal or via the [Scenarios API](/api-reference/scenarios).
+2. **Allowed origins must be set** on the scenario (`embed_allowed_origins`) so the iframe is only renderable from your domains. The token won't validate against any origin that isn't on this list.
+
+If either is missing the endpoint returns 403.
+
+## Request body
+
+<ParamField body="scenario_id" type="string" required>
+  UUID of the scenario to embed. Must be owned by the caller's membership and have `embed_enabled: true`.
+</ParamField>
+
+<ParamField body="end_user_id" type="string">
+  Opaque identifier for the end user on your side. Stored on the meeting record so you can correlate sessions with your users. Max 128 chars.
+</ParamField>
+
+<ParamField body="person_name" type="string">
+  Display name shown in the meeting UI (e.g., on the join screen). Max 80 chars.
+</ParamField>
+
+<ParamField body="allowed_origins" type="string[]">
+  Per-token origin allowlist. Must be a subset of the scenario's `embed_allowed_origins`. Use this when one scenario is embedded across multiple sites and you want a token scoped to one of them. Each entry must be a bare HTTPS origin like `https://partner.example`.
+</ParamField>
+
+<ParamField body="ttl_seconds" type="integer">
+  Token lifetime. Range `30`–`1800`. Default `600` (10 min).
+</ParamField>
+
+<ParamField body="variant" type="string">
+  Which iframe route the snippet points at. One of:
+
+  - `button` *(default)* — floating start button that opens the meeting in an overlay
+  - `inline` — full meeting UI inline in the page
+  - `avatar-assist` — floating avatar widget in the corner
+</ParamField>
+
+<ParamField body="width" type="string | number">
+  Iframe width on `iframe_html`. CSS string (`"100%"`, `"640px"`, `"50vw"`) or a positive px number. Default `"100%"`.
+</ParamField>
+
+<ParamField body="height" type="string | number">
+  Iframe height on `iframe_html`. Same shape as `width`. Default `640`.
+</ParamField>
+
+## Response
+
+<ResponseField name="token" type="string">
+  Signed JWT. Treat as a credential — short-lived but powerful inside its TTL.
+</ResponseField>
+
+<ResponseField name="expires_at" type="integer">
+  Unix seconds at which the token stops validating.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  Fully formed embed URL with `?t=<token>` baked in. Use this if you want to construct your own iframe.
+</ResponseField>
+
+<ResponseField name="iframe_html" type="string">
+  Copy-paste-ready `<iframe>` snippet with the URL, sizing, and the WebRTC `allow` attributes already set.
+</ResponseField>
+
+## Variants
+
+<CardGroup cols={3}>
+  <Card title="Button" icon="circle-play">
+    Floating start button that opens the meeting in a modal overlay. Default. Best when you're adding embed to an existing page without layout changes.
+  </Card>
+  <Card title="Inline" icon="rectangle-wide">
+    Full meeting UI rendered inline. Best for training portals, LMS, or dedicated meeting pages where the embed is the main content.
+  </Card>
+  <Card title="Avatar Assist" icon="robot">
+    Compact avatar widget in the corner. Best for support bots and onboarding nudges.
+  </Card>
+</CardGroup>
+
+## Token refresh
+
+Tokens expire (default 10 min). If the iframe is loaded but the user hasn't started the session yet when the token expires, the session start will be rejected. Two ways to handle this in practice:
+
+1. **Mint on demand.** Generate the token at the moment the page renders, not ahead of time. Server-render the `iframe_html`. Don't cache the response.
+2. **Mint a fresh token client-side just before opening the modal.** If you're using `variant: "button"` and the user might sit on the page for a while, refresh the token via an AJAX hit to your own backend (which proxies to this endpoint) right before opening the iframe.
+
+If you need a longer TTL, raise `ttl_seconds` (max 1800 = 30 min). Going much higher is intentionally not supported — leaked tokens should go stale fast.
+
+## Origin lock
+
+The token's claims include the origin allowlist, and the iframe enforces it at session start. A leaked token presented from an origin not on the list is rejected.
+
+```json
+{
+  "scenario_id": "SCENARIO_UUID",
+  "allowed_origins": ["https://partner.example", "https://staging.partner.example"]
+}
+```
+
+If you omit `allowed_origins`, the token inherits the scenario's full `embed_allowed_origins` list.
+
+<Warning>
+The iframe needs `allow="camera; microphone; autoplay"` to function. The `iframe_html` field has this set already; if you build your own iframe, copy these attributes verbatim. Your site must also be served over **HTTPS** — browsers block mic/camera on non-secure origins.
+</Warning>
+
+## Quick recipes
+
+### Node.js / Express
+
+```javascript
+app.get("/embed/launch", async (req, res) => {
+  const resp = await fetch("https://api.waterr.ai/v1/embed-tokens", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.WATERR_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      scenario_id: "SCENARIO_UUID",
+      end_user_id: req.user.id,
+      person_name: req.user.name,
+      variant: "inline",
+      height: 720,
+    }),
+  });
+  const { iframe_html } = await resp.json();
+  res.send(`<!doctype html><html><body>${iframe_html}</body></html>`);
+});
+```
+
+### Python / FastAPI
+
+```python
+@app.get("/embed/launch", response_class=HTMLResponse)
+async def launch(request: Request):
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            "https://api.waterr.ai/v1/embed-tokens",
+            headers={"Authorization": f"Bearer {WATERR_API_KEY}"},
+            json={
+                "scenario_id": "SCENARIO_UUID",
+                "end_user_id": request.state.user.id,
+                "person_name": request.state.user.name,
+                "variant": "button",
+            },
+        )
+    return f"<!doctype html><html><body>{r.json()['iframe_html']}</body></html>"
+```
+
+## Errors
+
+| Status | When |
+| --- | --- |
+| `401` | Missing or invalid `wai_` key |
+| `400` | Missing `scenario_id`, oversized fields, invalid `variant` / `width` / `height` / `ttl_seconds`, or `allowed_origins` not a subset of the scenario's |
+| `403` | Scenario found but `embed_enabled: false` |
+| `404` | Scenario not found, or owned by another membership (we don't leak existence) |
